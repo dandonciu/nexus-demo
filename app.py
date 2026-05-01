@@ -13,9 +13,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- INITIALIZARE VARIABILE GLOBALE & FUNCTII DE RESET ---
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
+
+# Inițializăm numărul de comandă și valorile input-urilor
+if 'order_number' not in st.session_state:
+    st.session_state.order_number = 1001
+if 'input_pal' not in st.session_state:
+    st.session_state.input_pal = 0
+if 'input_box' not in st.session_state:
+    st.session_state.input_box = 0
+
+# Funcția care resetează cantitățile la zero
+def reset_inputs():
+    st.session_state.input_pal = 0
+    st.session_state.input_box = 0
 
 if 'db' not in st.session_state:
     st.session_state.db = {
@@ -120,12 +134,22 @@ with col_logout:
 # --- APLICAȚIA ANGAJAT ---
 # ==========================================
 if st.session_state.role == "angajat":
-    st.title("⚡ NEXUS Operațional")
+    
+    # Adăugăm caseta dreapta-sus cu Data și Nr. Comandă
+    col_titlu, col_cmd = st.columns([4, 1])
+    with col_titlu:
+        st.title("⚡ NEXUS Operațional")
+    with col_cmd:
+        data_azi = datetime.now().strftime("%d.%m.%Y")
+        st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
+        
     tab1, tab2 = st.tabs(["🛒 Lansare Comandă", "📥 Recepție Marfă"])
     
     with tab1:
         client = st.selectbox("1. Selectează Beneficiarul:", clients_mock)
-        prod_name = st.selectbox("2. Selectează Produsul:", list(st.session_state.db.keys()))
+        
+        # MAGIC AICI: Când se schimbă produsul, declanșăm reset_inputs
+        prod_name = st.selectbox("2. Selectează Produsul:", list(st.session_state.db.keys()), on_change=reset_inputs)
         p_data = st.session_state.db[prod_name]
         
         st.markdown(f"#### 📦 {prod_name}")
@@ -150,8 +174,10 @@ if st.session_state.role == "angajat":
         st.divider()
         st.markdown("👇 **2. INTRODUCEȚI COMANDA**")
         col_q1, col_q2 = st.columns(2)
-        with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, value=0, step=1)
-        with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, value=0, step=1)
+        
+        # MAGIC AICI: Legăm inputurile de session_state prin 'key' ca să poată fi resetate
+        with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key='input_pal')
+        with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key='input_box')
         
         if order_pal > 0 or order_box > 0:
             delta = calculate_delta(prod_name, order_pal, order_box)
@@ -165,12 +191,21 @@ if st.session_state.role == "angajat":
                 c2.metric("Cutii Rămase:", rem_box)
                 
                 if st.button("🚀 Trimite Comanda spre Oracle & SmartBill", type="primary"):
+                    # Salvăm numărul curent pentru afișare, apoi îl creștem
+                    cmd_salvata = st.session_state.order_number
+                    
+                    # Update Stoc
                     st.session_state.db[prod_name]['stock_pal'] = rem_pal
                     st.session_state.db[prod_name]['stock_box'] = rem_box
-                    st.success("✅ Comandă procesată cu succes!")
+                    
+                    st.success(f"✅ Comanda {cmd_salvata} a fost procesată cu succes!")
+                    
+                    # LOGICA NOUĂ: Resetăm numerele și creștem id-ul la comandă
+                    st.session_state.order_number += 1
+                    reset_inputs()
                     
                     st.code(f"""
---- STATUS COMANDĂ CURENTĂ ---
+--- STATUS COMANDĂ: {cmd_salvata} ---
 Beneficiar: {client}
 Comandă lansată pentru: 
   -> {order_pal} x {p_data['oracle_pal']}
