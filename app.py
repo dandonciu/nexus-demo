@@ -21,9 +21,14 @@ if 'logged_in' not in st.session_state:
 if 'order_number' not in st.session_state:
     st.session_state.order_number = 1001
 
-# ID dinamic pentru a forța resetarea widgeturilor fără erori roșii
 if 'reset_counter' not in st.session_state:
     st.session_state.reset_counter = 0
+
+if 'schita_comanda' not in st.session_state:
+    st.session_state.schita_comanda = []
+    
+if 'mod_previzualizare' not in st.session_state:
+    st.session_state.mod_previzualizare = False
 
 def force_reset():
     st.session_state.reset_counter += 1
@@ -114,7 +119,7 @@ if not st.session_state.logged_in:
         with st.form("login_form"):
             pwd = st.text_input("Parolă", type="password")
             if st.form_submit_button("Log In (Enter)"):
-                if pwd in ["angajat-no", "manager-no"]:
+                if pwd in ["angajat", "manager"]:
                     st.session_state.logged_in = True
                     st.session_state.role = pwd
                     st.rerun()
@@ -139,98 +144,151 @@ if st.session_state.role == "angajat":
         data_azi = datetime.now().strftime("%d.%m.%Y")
         st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
         
-    tab1, tab2 = st.tabs(["🛒 Lansare Comandă", "📥 Recepție Marfă"])
+    tab1, tab2, tab3 = st.tabs(["🛒 Lansare Comandă", "🚚 Status & Documente", "📥 Recepție Marfă"])
     
+    # ==========================================
+    # TAB 1: LANSARE COMANDĂ (Coș / Schiță)
+    # ==========================================
     with tab1:
-        client = st.selectbox("1. Selectează Beneficiarul:", clients_mock)
+        client_ales = st.selectbox("1. Selectează Beneficiarul:", clients_mock)
         
-        # Legăm force_reset de dropdown
-        prod_name = st.selectbox("2. Selectează Produsul:", list(st.session_state.db.keys()), on_change=force_reset)
-        p_data = st.session_state.db[prod_name]
-        
-        st.markdown(f"#### 📦 {prod_name}")
-        
-# Afișare modernă coduri (pe un singur rând, adaptabil pe telefon)
-        st.markdown(f"""
-        <div style='background-color: #f0f7f4; padding: 20px; border-radius: 8px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
-            <div style='display: flex; flex-wrap: wrap; justify-content: space-between;'>
-                <div style='flex: 1; min-width: 180px; margin-bottom: 10px;'>
-                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod produs (NEXUS)</div>
-                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_master']}</div>
-                </div>
-                <div style='flex: 1; min-width: 150px; margin-bottom: 10px;'>
-                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod NIR</div>
-                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_nir']}</div>
-                </div>
-                <div style='flex: 1; min-width: 200px; margin-bottom: 10px;'>
-                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod Depozit (palet întreg)</div>
-                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['oracle_pal']}</div>
-                </div>
-                <div style='flex: 1; min-width: 150px; margin-bottom: 10px;'>
-                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod Depozit (Cutie)</div>
-                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['oracle_box']}</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.info("👇 **1. STOC ACTUAL**")
-        col_s1, col_s2, col_s3 = st.columns(3)
-        col_s1.metric("📦 Stoc PALEȚI", p_data['stock_pal'])
-        col_s2.metric("📦 Stoc CUTII libere", p_data['stock_box'])
-        col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
-        
-        st.divider()
-        st.markdown("👇 **2. INTRODUCEȚI COMANDA**")
-        col_q1, col_q2 = st.columns(2)
-        
-        # Legăm widgeturile de reset_counter. Astfel, când se schimbă counter-ul, revin automat la 0
-        with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
-        with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
-        
-        if order_pal > 0 or order_box > 0:
-            delta = calculate_delta(prod_name, order_pal, order_box)
-            if delta is None: st.error("❌ STOC INSUFICIENT!")
-            else:
-                rem_pal, rem_box = delta
-                st.divider()
-                st.success("👇 **3. STOC RĂMAS (După Validare)**")
-                c1, c2 = st.columns(2)
-                c1.metric("Paleți Rămași:", rem_pal)
-                c2.metric("Cutii Rămase:", rem_box)
+        # --- ECRAN A: ADĂUGARE ÎN SCHIȚĂ ---
+        if not st.session_state.mod_previzualizare:
+            st.markdown("### 📋 Formare Schiță Comandă")
+            
+            with st.container():
+                prod_name = st.selectbox("Alege Produsul:", list(st.session_state.db.keys()), on_change=force_reset)
+                p_data = st.session_state.db[prod_name]
                 
-                if st.button("🚀 Trimite Comanda spre Oracle & SmartBill", type="primary"):
-                    cmd_salvata = st.session_state.order_number
+                # Afișare modernă coduri (pe un singur rând, adaptabil pe telefon)
+                st.markdown(f"""
+                <div style='background-color: #f0f7f4; padding: 20px; border-radius: 8px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
+                    <div style='display: flex; flex-wrap: wrap; justify-content: space-between;'>
+                        <div style='flex: 1; min-width: 180px; margin-bottom: 10px;'>
+                            <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod produs (NEXUS)</div>
+                            <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_master']}</div>
+                        </div>
+                        <div style='flex: 1; min-width: 150px; margin-bottom: 10px;'>
+                            <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod NIR</div>
+                            <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_nir']}</div>
+                        </div>
+                        <div style='flex: 1; min-width: 200px; margin-bottom: 10px;'>
+                            <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod dB Depozit (Palet)</div>
+                            <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['oracle_pal']}</div>
+                        </div>
+                        <div style='flex: 1; min-width: 150px; margin-bottom: 10px;'>
+                            <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod dB Depozit (Cutie)</div>
+                            <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['oracle_box']}</div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col_s1, col_s2, col_s3 = st.columns(3)
+                col_s1.metric("📦 Stoc PALEȚI", p_data['stock_pal'])
+                col_s2.metric("📦 Stoc CUTII libere", p_data['stock_box'])
+                col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
+                
+                col_q1, col_q2 = st.columns(2)
+                with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
+                with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
+                
+                if st.button("➕ Adaugă în Listă"):
+                    if order_pal == 0 and order_box == 0:
+                        st.warning("Introduceți o cantitate înainte de a adăuga.")
+                    else:
+                        delta = calculate_delta(prod_name, order_pal, order_box)
+                        if delta is None:
+                            st.error("❌ STOC INSUFICIENT pentru această cantitate!")
+                        else:
+                            st.session_state.schita_comanda.append({
+                                "Produs": prod_name,
+                                "Paleti": order_pal,
+                                "Cutii": order_box,
+                                "Cod_Depozit_Pal": p_data['oracle_pal'],
+                                "Cod_Depozit_Box": p_data['oracle_box']
+                            })
+                            st.success(f"Adăugat: {prod_name} ({order_pal} Pal, {order_box} Cutii)")
+                            force_reset()
+                            st.rerun()
+
+            st.divider()
+
+            # --- ZONA DE AFIȘARE A SCHIȚEI ---
+            if len(st.session_state.schita_comanda) > 0:
+                st.markdown(f"#### 🛒 Produse în comanda curentă (Către: {client_ales})")
+                df_schita = pd.DataFrame(st.session_state.schita_comanda)
+                st.dataframe(df_schita[['Produs', 'Paleti', 'Cutii']], use_container_width=True, hide_index=True)
+                
+                col_btn1, col_btn2 = st.columns([1, 3])
+                with col_btn1:
+                    if st.button("🗑️ Golește Lista"):
+                        st.session_state.schita_comanda = []
+                        st.rerun()
+                with col_btn2:
+                    if st.button("👁️ Previzualizare & Finalizare", type="primary", use_container_width=True):
+                        st.session_state.mod_previzualizare = True
+                        st.rerun()
+            else:
+                st.info("Schița este goală. Adăugați produse pentru a forma o comandă.")
+
+        # --- ECRAN B: PREVIZUALIZARE & TRIMITERE ---
+        else:
+            st.markdown("### 🔍 Previzualizare Aviz (Înainte de Trimitere)")
+            
+            st.markdown(f"""
+            <div style='border: 1px solid #ccc; padding: 20px; border-radius: 5px; background-color: #fff;'>
+                <h4 style='text-align: center; color: #003366;'>PROIECT AVIZ EXPEDIȚIE - NEXUS</h4>
+                <p><b>Data:</b> {data_azi}<br>
+                <b>Client Beneficiar:</b> {client_ales}<br>
+                <b>Nr. Comandă Interne:</b> CMD-{st.session_state.order_number}</p>
+                <hr>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            df_previzualizare = pd.DataFrame(st.session_state.schita_comanda)
+            st.table(df_previzualizare[['Produs', 'Paleti', 'Cutii']])
+            
+            st.warning("⚠️ Vă rugăm să verificați cantitățile. Odată lansată, comanda blochează stocul și ajunge pe tableta operatorilor din depozit.")
+            
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                if st.button("🔙 Întoarce-te (Mai adaugă produse)"):
+                    st.session_state.mod_previzualizare = False
+                    st.rerun()
+            with col_b2:
+                if st.button("🚀 CONFIRMĂ ȘI LANSEAZĂ SPRE dB DEPOZIT", type="primary", use_container_width=True):
                     
-                    # Update Stoc
-                    st.session_state.db[prod_name]['stock_pal'] = rem_pal
-                    st.session_state.db[prod_name]['stock_box'] = rem_box
+                    for item in st.session_state.schita_comanda:
+                        nume = item['Produs']
+                        pal, box = item['Paleti'], item['Cutii']
+                        rem_pal, rem_box = calculate_delta(nume, pal, box)
+                        st.session_state.db[nume]['stock_pal'] = rem_pal
+                        st.session_state.db[nume]['stock_box'] = rem_box
+
+                    st.success(f"✅ Comanda CMD-{st.session_state.order_number} a fost trimisă spre dB Depozit!")
+                    st.info("Vă rugăm să accesați Tab-ul 'Status & Documente' pentru a aștepta numărul auto și a emite documentele finale.")
                     
-                    st.success(f"✅ Comanda {cmd_salvata} a fost procesată cu succes!")
-                    
-                    # Incrementăm comanda și forțăm widgeturile la 0 pentru noua comandă
                     st.session_state.order_number += 1
-                    force_reset()
-                    
-                    st.code(f"""
---- STATUS COMANDĂ: {cmd_salvata} ---
-Beneficiar: {client}
-Comandă lansată pentru: 
-  -> {order_pal} x {p_data['oracle_pal']}
-  -> {order_box} x {p_data['oracle_box']}
+                    st.session_state.schita_comanda = []
+                    st.session_state.mod_previzualizare = False
+                    time.sleep(3)
+                    st.rerun()
 
-[RĂSPUNS AȘTEPTAT DE LA ORACLE (WebHook)]
-Status: PENDING DEPOT...
-(Câmpurile "Avizat la data de...", "Nr. Auto" și "Nume Șofer" 
- se vor completa automat în NEXUS DB când Oracle închide avizul de expediție.)
-
-[URMĂTORUL PAS AUTOMAT]
-La recepția avizului din Oracle -> NEXUS trimite Date Facturare la SmartBill.
-                    """, language="log")
-
+    # ==========================================
+    # TAB 2: STATUS & DOCUMENTE (Nou)
+    # ==========================================
     with tab2:
+        st.markdown("### 🚚 Status Comenzi & Emitere Documente")
+        st.info("🚧 Aici vor apărea comenzile lansate, așteptând confirmarea încărcării din dB Depozit.")
+
+    # ==========================================
+    # TAB 3: RECEPȚIE
+    # ==========================================
+    with tab3:
         st.markdown("### 📥 Sincronizare Recepții (Așteptare SmartBill)")
-        st.info("🚧 În producție, acest ecran va fi populat automat cu NIR-urile noi emise de SmartBill. Angajatul doar va confirma recepția fizică a mărfii.")
+        st.info("🚧 În producție, acest ecran va fi populat automat cu NIR-urile noi emise de SmartBill.")
+
 
 # ==========================================
 # --- APLICAȚIA MANAGER ---
@@ -260,9 +318,9 @@ elif st.session_state.role == "manager":
         billed = math.ceil(get_total_boxes(mgr_prod) / p_val['conversion'])
         c4.metric("Facturare Depozit", f"{billed} paleți")
         
-        with st.expander("📝 Vezi descriere produs & Date Oracle"):
+        with st.expander("📝 Vezi descriere produs & Date dB Depozit"):
             st.write(f"**Descriere Nomenclator:** {p_val['descriere']}")
-            st.write("Aici vom putea importa și alte câmpuri din Oracle: Lot, Data Expirării, Locație raft depozit, etc.")
+            st.write("Aici vom putea importa și alte câmpuri din dB Depozit: Lot, Data Expirării, Locație raft depozit, etc.")
 
         if p_val['stock_box'] > (p_val['conversion'] * 0.7):
             st.error(f"🔴 ATENȚIE: Aveți prea multe cutii libere ({p_val['stock_box']}).")
@@ -272,7 +330,7 @@ elif st.session_state.role == "manager":
             st.success("🟢 OPTIM: Nu aveți fracții desfăcute în depozit.")
             
         st.divider()
-        st.subheader("3. Rapoarte Operative Rapide (Oracle)")
+        st.subheader("3. Rapoarte Operative Rapide")
         col_r1, col_r2 = st.columns(2)
         with col_r1:
             with st.expander("🚨 Mărfuri sub stoc critic"):
@@ -293,7 +351,7 @@ elif st.session_state.role == "manager":
         col_m1, col_m2, col_m3 = st.columns([2, 2, 1])
         with col_m1: analiza_client = st.selectbox("Selectează Client / Filială:", clients_mock)
         with col_m2: analiza_produs = st.selectbox("Selectează Produs:", list(st.session_state.db.keys()), key="mgr_prod_an")
-        with col_m3: raport = st.selectbox("Meniu Delirant 🤣", ["Evoluție Volume & Plăți", "Raportări Oracle"])
+        with col_m3: raport = st.selectbox("Meniu Delirant 🤣", ["Evoluție Volume & Plăți", "Raportări dB Depozit"])
         
         if raport == "Evoluție Volume & Plăți":
             st.markdown(f"#### 📊 Istoric Livrări: **{analiza_produs}** către **{analiza_client}**")
@@ -319,8 +377,8 @@ elif st.session_state.role == "manager":
                 def color_status(val): return 'color: #28a745; font-weight:bold;' if val == 'Achitat' else 'color: #dc3545; font-weight:bold;' if 'Restanță' in str(val) else 'color: #17a2b8;'
                 st.dataframe(df_filtrat[['Data', 'Volum_Paleti', 'Status_Plata']].style.map(color_status, subset=['Status_Plata']), hide_index=True)
             
-        elif raport == "Raportări Oracle":
-            st.info("🔄 Se afișează rapoartele sincronizate din vechiul sistem Oracle.")
+        elif raport == "Raportări dB Depozit":
+            st.info("🔄 Se afișează rapoartele sincronizate din baza de date a depozitului.")
             st.dataframe(pd.DataFrame({
                 "Nume Raport": ["Balanță Stocuri", "Rotație Marfă", "Facturi Emise vs Încasate"],
                 "Ultima Actualizare": ["Azi 08:00", "Ieri 18:00", "Azi 09:15"],
