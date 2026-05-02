@@ -150,14 +150,29 @@ if st.session_state.role == "angajat":
         
         st.markdown(f"#### 📦 {prod_name}")
         
+# Afișare modernă coduri (format grilă 2x2)
         st.markdown(f"""
-        <div style='background-color: #f0f7f4; padding: 15px; border-radius: 8px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
-            <span style='font-size: 1.25rem;'>
-                <b>Cod NEXUS:</b> <span style='color: #28a745; font-weight: bold;'>{p_data['cod_master']}</span> &nbsp;|&nbsp; 
-                <b>Cod NIR:</b> <span style='color: #28a745; font-weight: bold;'>{p_data['cod_nir']}</span> &nbsp;|&nbsp; 
-                <b>Cod ORACLE Palet:</b> <span style='color: #28a745; font-weight: bold;'>{p_data['oracle_pal']}</span> &nbsp;|&nbsp; 
-                <b>Cod ORACLE Cutie:</b> <span style='color: #28a745; font-weight: bold;'>{p_data['oracle_box']}</span>
-            </span>
+        <div style='background-color: #f0f7f4; padding: 20px; border-radius: 8px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
+            <div style='display: flex; margin-bottom: 15px;'>
+                <div style='flex: 1;'>
+                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod Produs (NEXUS)</div>
+                    <div style='font-size: 1.6rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['cod_master']}</div>
+                </div>
+                <div style='flex: 1;'>
+                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod NIR</div>
+                    <div style='font-size: 1.6rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['cod_nir']}</div>
+                </div>
+            </div>
+            <div style='display: flex;'>
+                <div style='flex: 1;'>
+                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod ORACLE (Palet Întreg)</div>
+                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['oracle_pal']}</div>
+                </div>
+                <div style='flex: 1;'>
+                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod ORACLE (Cutie)</div>
+                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['oracle_box']}</div>
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
