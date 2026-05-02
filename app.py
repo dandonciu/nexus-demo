@@ -150,27 +150,25 @@ if st.session_state.role == "angajat":
         
         st.markdown(f"#### 📦 {prod_name}")
         
-# Afișare modernă coduri (format grilă 2x2)
+# Afișare modernă coduri (pe un singur rând, adaptabil pe telefon)
         st.markdown(f"""
         <div style='background-color: #f0f7f4; padding: 20px; border-radius: 8px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
-            <div style='display: flex; margin-bottom: 15px;'>
-                <div style='flex: 1;'>
-                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod Produs (NEXUS)</div>
-                    <div style='font-size: 1.6rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['cod_master']}</div>
+            <div style='display: flex; flex-wrap: wrap; justify-content: space-between;'>
+                <div style='flex: 1; min-width: 180px; margin-bottom: 10px;'>
+                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod produs (NEXUS)</div>
+                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_master']}</div>
                 </div>
-                <div style='flex: 1;'>
+                <div style='flex: 1; min-width: 150px; margin-bottom: 10px;'>
                     <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod NIR</div>
-                    <div style='font-size: 1.6rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['cod_nir']}</div>
+                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_nir']}</div>
                 </div>
-            </div>
-            <div style='display: flex;'>
-                <div style='flex: 1;'>
-                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod ORACLE (Palet Întreg)</div>
-                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['oracle_pal']}</div>
+                <div style='flex: 1; min-width: 200px; margin-bottom: 10px;'>
+                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod Depozit (palet întreg)</div>
+                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['oracle_pal']}</div>
                 </div>
-                <div style='flex: 1;'>
-                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod ORACLE (Cutie)</div>
-                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold; line-height: 1;'>{p_data['oracle_box']}</div>
+                <div style='flex: 1; min-width: 150px; margin-bottom: 10px;'>
+                    <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod Depozit (Cutie)</div>
+                    <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['oracle_box']}</div>
                 </div>
             </div>
         </div>
