@@ -246,14 +246,15 @@ if st.session_state.role == "angajat":
                 <hr>
             </div>
             """, unsafe_allow_html=True)
+            
             df_previzualizare = pd.DataFrame(st.session_state.schita_comanda)[['Produs', 'Paleti', 'Cutii']]
 
-# Aplicăm un 'Styler' pentru a forța textul și capul de tabel (Header) să stea la stânga
-tabel_aliniat = df_previzualizare.style.set_properties(**{'text-align': 'left'}).set_table_styles(
-    [dict(selector='th', props=[('text-align', 'left')])]
-)
+            # Aplicăm un 'Styler' pentru a forța textul și capul de tabel (Header) să stea la stânga
+            tabel_aliniat = df_previzualizare.style.set_properties(**{'text-align': 'left'}).set_table_styles(
+            [dict(selector='th', props=[('text-align', 'left')])]        
+            )
 
-st.table(tabel_aliniat)
+            st.table(tabel_aliniat)
           
             
             st.warning("⚠️ Vă rugăm să verificați cantitățile. Odată lansată, comanda blochează stocul și ajunge pe tableta operatorilor din depozit.")
