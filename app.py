@@ -437,7 +437,7 @@ elif st.session_state.role == "manager":
         
         st.divider()
         # [NOU] Pasul 3: Live Feed Comenzi în tab-ul operativ
-        st.subheader("🔴 LIVE FEED: Comenzi Noi (Lansate de Depozit)")
+        st.subheader("🔴 LIVE FEED: Comenzi Noi (Depozit)")
         if len(st.session_state.istoric_comenzi_live) > 0:
             df_live = pd.DataFrame(st.session_state.istoric_comenzi_live)
             st.dataframe(df_live, use_container_width=True, hide_index=True)
