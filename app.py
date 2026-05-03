@@ -30,6 +30,10 @@ if 'schita_comanda' not in st.session_state:
 if 'mod_previzualizare' not in st.session_state:
     st.session_state.mod_previzualizare = False
 
+# [NOU] Pasul 1: Lista pentru comenzile live
+if 'istoric_comenzi_live' not in st.session_state:
+    st.session_state.istoric_comenzi_live = []
+
 def force_reset():
     st.session_state.reset_counter += 1
 
@@ -102,13 +106,26 @@ def get_total_boxes(prod_key):
     p = st.session_state.db[prod_key]
     return (p['stock_pal'] * p['conversion']) + p['stock_box']
 
+# Funcție pentru a verifica stocul vizual în timpul formării coșului
+def get_available_stock_ui(prod_key):
+    total_db = get_total_boxes(prod_key)
+    in_cart = sum([(item['Paleti'] * st.session_state.db[prod_key]['conversion']) + item['Cutii'] 
+                   for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
+    rem = total_db - in_cart
+    conv = st.session_state.db[prod_key]['conversion']
+    return rem // conv, rem % conv
+
 def calculate_delta(prod_key, cmd_pal, cmd_box):
-    p = st.session_state.db[prod_key]
     total_stock = get_total_boxes(prod_key)
-    total_cmd = (cmd_pal * p['conversion']) + cmd_box
+    # Calculăm și ce e deja în coș pentru a nu permite suprasolicitarea stocului real
+    in_cart = sum([(item['Paleti'] * st.session_state.db[prod_key]['conversion']) + item['Cutii'] 
+                   for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
+    
+    p = st.session_state.db[prod_key]
+    total_cmd = (cmd_pal * p['conversion']) + cmd_box + in_cart
+    
     if total_cmd > total_stock: return None
-    rem = total_stock - total_cmd
-    return (rem // p['conversion'], rem % p['conversion'])
+    return True # Doar verificăm dacă e valid, scăderea se face la final
 
 # --- ECRAN LOGIN ---
 if not st.session_state.logged_in:
@@ -119,7 +136,7 @@ if not st.session_state.logged_in:
         with st.form("login_form"):
             pwd = st.text_input("Parolă", type="password")
             if st.form_submit_button("Log In (Enter)"):
-                if pwd in ["angajat-no", "manager-no"]:
+                if pwd in ["angajat", "manager"]:
                     st.session_state.logged_in = True
                     st.session_state.role = pwd
                     st.rerun()
@@ -160,7 +177,7 @@ if st.session_state.role == "angajat":
                 prod_name = st.selectbox("Alege Produsul:", list(st.session_state.db.keys()), on_change=force_reset)
                 p_data = st.session_state.db[prod_name]
                 
-                # Afișare modernă coduri (pe un singur rând, adaptabil pe telefon)
+                # Afișare modernă coduri
                 st.markdown(f"""
                 <div style='background-color: #f0f7f4; padding: 20px; border-radius: 8px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
                     <div style='display: flex; flex-wrap: wrap; justify-content: space-between;'>
@@ -184,9 +201,12 @@ if st.session_state.role == "angajat":
                 </div>
                 """, unsafe_allow_html=True)
                 
+                # [UPDATE] Calculăm stocul disponibil (Stoc total - ce e deja în schiță)
+                av_pal, av_box = get_available_stock_ui(prod_name)
+                
                 col_s1, col_s2, col_s3 = st.columns(3)
-                col_s1.metric("📦 Stoc PALEȚI", p_data['stock_pal'])
-                col_s2.metric("📦 Stoc CUTII libere", p_data['stock_box'])
+                col_s1.metric("📦 Stoc PALEȚI Disponibil", av_pal)
+                col_s2.metric("📦 Stoc CUTII libere Disp.", av_box)
                 col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
                 
                 col_q1, col_q2 = st.columns(2)
@@ -197,8 +217,8 @@ if st.session_state.role == "angajat":
                     if order_pal == 0 and order_box == 0:
                         st.warning("Introduceți o cantitate înainte de a adăuga.")
                     else:
-                        delta = calculate_delta(prod_name, order_pal, order_box)
-                        if delta is None:
+                        is_valid = calculate_delta(prod_name, order_pal, order_box)
+                        if not is_valid:
                             st.error("❌ STOC INSUFICIENT pentru această cantitate!")
                         else:
                             st.session_state.schita_comanda.append({
@@ -217,8 +237,13 @@ if st.session_state.role == "angajat":
             # --- ZONA DE AFIȘARE A SCHIȚEI ---
             if len(st.session_state.schita_comanda) > 0:
                 st.markdown(f"#### 🛒 Produse în comanda curentă (Către: {client_ales})")
-                df_schita = pd.DataFrame(st.session_state.schita_comanda)
-                st.dataframe(df_schita[['Produs', 'Paleti', 'Cutii']], use_container_width=True, hide_index=True)
+                
+                # [NOU] Metoda brută pentru aliniere la stânga în Schiță
+                df_schita = pd.DataFrame(st.session_state.schita_comanda)[['Produs', 'Paleti', 'Cutii']]
+                df_schita['Paleti'] = df_schita['Paleti'].astype(str)
+                df_schita['Cutii'] = df_schita['Cutii'].astype(str)
+                
+                st.dataframe(df_schita, use_container_width=True, hide_index=True)
                 
                 col_btn1, col_btn2 = st.columns([1, 3])
                 with col_btn1:
@@ -246,8 +271,11 @@ if st.session_state.role == "angajat":
             </div>
             """, unsafe_allow_html=True)
             
-            df_previzualizare = pd.DataFrame(st.session_state.schita_comanda)
-            st.table(df_previzualizare[['Produs', 'Paleti', 'Cutii']])
+            # [NOU] Metoda brută pentru aliniere la stânga în Previzualizare
+            df_previzualizare = pd.DataFrame(st.session_state.schita_comanda)[['Produs', 'Paleti', 'Cutii']]
+            df_previzualizare['Paleti'] = df_previzualizare['Paleti'].astype(str)
+            df_previzualizare['Cutii'] = df_previzualizare['Cutii'].astype(str)
+            st.table(df_previzualizare)
             
             st.warning("⚠️ Vă rugăm să verificați cantitățile. Odată lansată, comanda blochează stocul și ajunge pe tableta operatorilor din depozit.")
             
@@ -259,20 +287,39 @@ if st.session_state.role == "angajat":
             with col_b2:
                 if st.button("🚀 CONFIRMĂ ȘI LANSEAZĂ SPRE dB DEPOZIT", type="primary", use_container_width=True):
                     
+                    # [UPDATE] Agregăm produsele (în caz că sunt pe mai multe rânduri) și scădem din DB
+                    totaluri_cos = {}
                     for item in st.session_state.schita_comanda:
-                        nume = item['Produs']
-                        pal, box = item['Paleti'], item['Cutii']
-                        rem_pal, rem_box = calculate_delta(nume, pal, box)
-                        st.session_state.db[nume]['stock_pal'] = rem_pal
-                        st.session_state.db[nume]['stock_box'] = rem_box
+                        prod = item['Produs']
+                        cutii_total_item = (item['Paleti'] * st.session_state.db[prod]['conversion']) + item['Cutii']
+                        totaluri_cos[prod] = totaluri_cos.get(prod, 0) + cutii_total_item
+                        
+                    for prod, cutii_de_scazut in totaluri_cos.items():
+                        stoc_curent = get_total_boxes(prod)
+                        stoc_ramas = stoc_curent - cutii_de_scazut
+                        conv = st.session_state.db[prod]['conversion']
+                        
+                        st.session_state.db[prod]['stock_pal'] = stoc_ramas // conv
+                        st.session_state.db[prod]['stock_box'] = stoc_ramas % conv
+                    
+                    # Forțăm Streamlit să recunoască modificarea dicționarului
+                    st.session_state.db = st.session_state.db
+
+                    # [NOU] Pasul 2: Salvăm comanda în Live Feed-ul Managerului
+                    st.session_state.istoric_comenzi_live.append({
+                        "Comanda": f"CMD-{st.session_state.order_number}",
+                        "Client": client_ales,
+                        "Articole": len(st.session_state.schita_comanda),
+                        "Status": "Așteaptă Încărcare",
+                        "Data_Ora": datetime.now().strftime("%H:%M:%S")
+                    })
 
                     st.success(f"✅ Comanda CMD-{st.session_state.order_number} a fost trimisă spre dB Depozit!")
-                    st.info("Vă rugăm să accesați Tab-ul 'Status & Documente' pentru a aștepta numărul auto și a emite documentele finale.")
                     
                     st.session_state.order_number += 1
                     st.session_state.schita_comanda = []
                     st.session_state.mod_previzualizare = False
-                    time.sleep(3)
+                    time.sleep(1.5)
                     st.rerun()
 
     # ==========================================
@@ -306,6 +353,16 @@ elif st.session_state.role == "manager":
         c_k3.error("Facturi restante clienți: 2")
         
         st.divider()
+        # [NOU] Pasul 3: Live Feed Comenzi în tab-ul operativ
+        st.subheader("🔴 LIVE FEED: Comenzi Noi (Lansate de Depozit)")
+        if len(st.session_state.istoric_comenzi_live) > 0:
+            df_live = pd.DataFrame(st.session_state.istoric_comenzi_live)
+            st.dataframe(df_live, use_container_width=True, hide_index=True)
+        else:
+            st.info("Nicio comandă nouă lansată astăzi.")
+            
+        st.divider()
+        
         st.subheader("2. Analiză Stoc Punctual")
         mgr_prod = st.selectbox("Selectare Produs:", list(st.session_state.db.keys()))
         p_val = st.session_state.db[mgr_prod]
