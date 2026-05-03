@@ -189,8 +189,7 @@ if st.session_state.role == "angajat":
                 col_s2.metric("📦 Stoc CUTII libere", p_data['stock_box'])
                 col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
                 
-                # Creăm 3 coloane: primele două mici (1 și 1) pentru inputuri, și a treia mare (2) care stă goală
-                col_q1, col_q2, col_goala = st.columns([1, 1, 2])
+                col_q1, col_q2 = st.columns(2)
                 with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
                 with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
                 
@@ -221,7 +220,7 @@ if st.session_state.role == "angajat":
                 df_schita = pd.DataFrame(st.session_state.schita_comanda)
                 st.dataframe(df_schita[['Produs', 'Paleti', 'Cutii']], use_container_width=True, hide_index=True)
                 
-                col_btn1, col_btn2 = st.columns([1, 2])
+                col_btn1, col_btn2 = st.columns([1, 3])
                 with col_btn1:
                     if st.button("🗑️ Golește Lista"):
                         st.session_state.schita_comanda = []
@@ -247,15 +246,8 @@ if st.session_state.role == "angajat":
             </div>
             """, unsafe_allow_html=True)
             
-
-            # Extragem datele
-            df_previzualizare = pd.DataFrame(st.session_state.schita_comanda)[['Produs', 'Paleti', 'Cutii']]
-            
-            # METODA BRUTĂ: Forțăm numerele să devină Text (String) ca să stea la stânga
-            df_previzualizare['Paleti'] = df_previzualizare['Paleti'].astype(str)
-            df_previzualizare['Cutii'] = df_previzualizare['Cutii'].astype(str)
-            
-            st.table(df_previzualizare)   
+            df_previzualizare = pd.DataFrame(st.session_state.schita_comanda)
+            st.table(df_previzualizare[['Produs', 'Paleti', 'Cutii']])
             
             st.warning("⚠️ Vă rugăm să verificați cantitățile. Odată lansată, comanda blochează stocul și ajunge pe tableta operatorilor din depozit.")
             
