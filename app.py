@@ -198,6 +198,20 @@ if st.session_state.role == "angajat":
     # ==========================================
     with tab1:
         client_ales = st.selectbox("1. Selectează Beneficiarul:", clients_mock)
+        # --- SISTEM DE NOTIFICARE (BEC ROȘU) ---
+        comenzi_pending = [cmd for cmd in st.session_state.istoric_comenzi_live if cmd.get('status_incarcat', False) and not cmd.get('document_emis', False)]
+        
+        if len(comenzi_pending) > 0:
+            st.markdown(f"""
+            <div style='background-color: #fff3f3; border-left: 5px solid #dc3545; padding: 15px; margin-top: 10px; margin-bottom: 20px; border-radius: 4px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>
+                <div style='font-size: 2rem; margin-right: 15px;'>🚨</div>
+                <div>
+                    <h4 style='color: #dc3545; margin: 0;'>ACȚIUNE NECESARĂ: {len(comenzi_pending)} mașină/mașini așteaptă actele la rampă!</h4>
+                    <p style='margin: 0; font-size: 0.95rem; color: #555;'>Treceți în tab-ul <b>'Status & Documente'</b> pentru a emite Avizul și a elibera camionul.</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        # --------------------------------------
         
         # --- ECRAN A: ADĂUGARE ÎN SCHIȚĂ ---
         if not st.session_state.mod_previzualizare:
@@ -400,7 +414,7 @@ if st.session_state.role == "angajat":
                         # Verificăm dacă nu a fost deja emis
                         daca_emis = cmd.get('document_emis', False)
                         if not daca_emis:
-                            if st.button("🖨️ EMITE AVIZUL și Declarația de conformitate (Și trimite la SmartBill și la Depozit)", type="primary", key=f"emit_{idx}"):
+                            if st.button("🖨️ EMITE AVIZUL și Declarația de Conformitate (Și trimite la SmartBill și la Depozit)", type="primary", key=f"emit_{idx}"):
                                 st.session_state.istoric_comenzi_live[idx]['document_emis'] = True
                                 st.session_state.istoric_comenzi_live[idx]['Status'] = "Finalizat. Trimis SB."
                                 
