@@ -165,7 +165,7 @@ if not st.session_state.logged_in:
         st.info("💡 Cine sunteți: 'angajat' sau 'manager'")
         with st.form("login_form"):
             pwd = st.text_input("Parolă", type="password")
-            if st.form_submit_button("Log In (Enter)"):
+            if st.form_submit_button("Log In"):
                 if pwd in ["angajat", "manager"]:
                     st.session_state.logged_in = True
                     st.session_state.role = pwd
