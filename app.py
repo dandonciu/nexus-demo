@@ -400,7 +400,7 @@ if st.session_state.role == "angajat":
                         # Verificăm dacă nu a fost deja emis
                         daca_emis = cmd.get('document_emis', False)
                         if not daca_emis:
-                            if st.button("🖨️ EMITE AVIZUL (Și trimite la SmartBill și la Depozit)", type="primary", key=f"emit_{idx}"):
+                            if st.button("🖨️ EMITE AVIZUL și Declarația de conformitate (Și trimite la SmartBill și la Depozit)", type="primary", key=f"emit_{idx}"):
                                 st.session_state.istoric_comenzi_live[idx]['document_emis'] = True
                                 st.session_state.istoric_comenzi_live[idx]['Status'] = "Finalizat. Trimis SB."
                                 
@@ -409,7 +409,7 @@ if st.session_state.role == "angajat":
                                 time.sleep(2)
                                 st.rerun()
                         else:
-                            st.info("Aviz Emis. Documente finalizate trimise la SmartBill și la Depozit.")
+                            st.info("Aviz și Decl. Conf. Emise. Documente finalizate trimise la SmartBill și la Depozit.")
                 st.divider()
 
     # ==========================================
