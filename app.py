@@ -130,7 +130,7 @@ def calculate_delta(prod_key, cmd_pal, cmd_box):
 # --- ECRAN LOGIN ---
 if not st.session_state.logged_in:
     st.markdown("<h1 style='text-align: center;'>🔐 NEXUS</h1>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1, 1])
+    col1, col2, col3 = st.columns([1, 1, 2])
     with col2:
         st.info("💡 Cine sunteți: 'angajat' sau 'manager'")
         with st.form("login_form"):
