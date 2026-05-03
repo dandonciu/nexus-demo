@@ -409,7 +409,7 @@ if st.session_state.role == "angajat":
                                 time.sleep(2)
                                 st.rerun()
                         else:
-                            st.info("Aviz Emis. Documente finalizate.")
+                            st.info("Aviz Emis. Documente finalizate trimise la SmartBill și la depozit.")
                 st.divider()
 
     # ==========================================
