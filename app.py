@@ -356,9 +356,61 @@ if st.session_state.role == "angajat":
     # ==========================================
     # TAB 2: STATUS & DOCUMENTE (Nou)
     # ==========================================
+# ==========================================
+    # TAB 2: STATUS & DOCUMENTE
+    # ==========================================
     with tab2:
-        st.markdown("### 🚚 Status Comenzi & Emitere Documente")
-        st.info("🚧 Aici vor apărea comenzile lansate, așteptând confirmarea încărcării din dB Depozit.")
+        st.markdown("### 🚚 Confirmare Depozit & Emitere Documente")
+        
+        # Citim comenzile din Live Feed (aceleași pe care le vede și Managerul)
+        comenzi_lansate = st.session_state.istoric_comenzi_live
+        
+        if len(comenzi_lansate) == 0:
+            st.info("Nicio comandă nu a fost lansată încă spre depozit.")
+        else:
+            for idx, cmd in enumerate(comenzi_lansate):
+                # Facem un mic "card" vizual pentru fiecare comandă
+                cu_status_incarcat = cmd.get('status_incarcat', False)
+                border_color = "#28a745" if cu_status_incarcat else "#ffc107"
+                bg_color = "#f9fff9" if cu_status_incarcat else "#fffdf5"
+                
+                st.markdown(f"""
+                <div style='border-left: 5px solid {border_color}; background-color: {bg_color}; padding: 15px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>
+                    <h4 style='margin-top: 0; color: #003366;'>{cmd['Comanda']} - {cmd['Client']}</h4>
+                    <p style='margin-bottom: 0;'><b>Articole:</b> {cmd['Articole']} | <b>Ora lansării:</b> {cmd['Data_Ora']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col_btn_a, col_btn_b, col_btn_c = st.columns([1, 2, 2])
+                
+                # Butonul prin care simulăm că Stivuitoristul a confirmat din depozit
+                with col_btn_a:
+                    if not cu_status_incarcat:
+                        if st.button("📲 Simulare: Confirmat Depozit", key=f"sim_dep_{idx}"):
+                            # Schimbăm statusul
+                            st.session_state.istoric_comenzi_live[idx]['Status'] = "Încărcat. Gata de printare."
+                            st.session_state.istoric_comenzi_live[idx]['status_incarcat'] = True
+                            st.rerun()
+                    else:
+                        st.success("✅ Marfă Încărcată")
+
+                # Butonul final de emitere: face print + trimite la SmartBill
+                with col_btn_b:
+                    if cu_status_incarcat:
+                        # Verificăm dacă nu a fost deja emis
+                        daca_emis = cmd.get('document_emis', False)
+                        if not daca_emis:
+                            if st.button("🖨️ EMITE AVIZUL (Și trimite la SmartBill)", type="primary", key=f"emit_{idx}"):
+                                st.session_state.istoric_comenzi_live[idx]['document_emis'] = True
+                                st.session_state.istoric_comenzi_live[idx]['Status'] = "Finalizat. Trimis SB."
+                                
+                                # Aici va fi API-ul real pentru SmartBill (acum doar afișăm succes)
+                                st.success("✅ Avizul se tipărește! Datele au fost trimise instant către SmartBill în fundal.")
+                                time.sleep(2)
+                                st.rerun()
+                        else:
+                            st.info("Aviz Emis. Documente finalizate.")
+                st.divider()
 
     # ==========================================
     # TAB 3: RECEPȚIE
