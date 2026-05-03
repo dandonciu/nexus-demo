@@ -6,7 +6,37 @@ import pandas as pd
 import plotly.express as px
 
 st.set_page_config(page_title="NEXUS B2B", page_icon="📦", layout="wide")
+st.set_page_config(page_title="NEXUS B2B", page_icon="📦", layout="wide")
 
+# --- BANNER / ANTET PRINCIPAL NEXUS ---
+st.markdown("""
+    <div style="background: linear-gradient(90deg, #003366 0%, #004080 100%); 
+                padding: 20px 30px; 
+                border-radius: 10px; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                color: white; 
+                margin-bottom: 25px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div>
+            <h1 style="margin: 0; padding: 0; color: #ffffff; font-size: 2.5rem; letter-spacing: 1px;">
+                📦 NEXUS
+            </h1>
+            <p style="margin: 0; padding: 0; font-style: italic; color: #a8c5e8; font-size: 1.1rem; margin-top: -5px;">
+                Rezolvă probleme, nu le creează.
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <p style="margin: 0; padding: 0; font-weight: bold; font-size: 1.3rem; letter-spacing: 0.5px;">
+                CORPORAȚIA ALPHA SRL
+            </p>
+            <p style="margin: 0; padding: 0; font-size: 0.95rem; color: #d0e1f9;">
+                Sistem Integrat de Gestiune Operativă
+            </p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 st.markdown("""
     <style>
     .stSelectbox label, .stNumberInput label { font-size: 1.1rem !important; font-weight: bold !important; color: #003366 !important; }
