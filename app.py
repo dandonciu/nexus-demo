@@ -240,7 +240,7 @@ if st.session_state.role == "angajat":
                 col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
                 
                 # Creăm 3 coloane: primele două mici (1 și 1) pentru inputuri, și a treia mare (2) care stă goală
-                col_q1, col_q2, col_goala = st.columns([1, 1, 2])
+                col_q1, col_q2, col_goala = st.columns([1, 1, 1])
                 with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
                 with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
                 
