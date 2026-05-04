@@ -28,7 +28,7 @@ st.markdown("""
         </div>
         <div style="text-align: right;">
             <p style="margin: 0; padding: 0; font-weight: bold; font-size: 1.3rem; letter-spacing: 0.5px;">
-                CORPORAȚIA ALPHA SRL
+                NOVA SAFE SRL
             </p>
             <p style="margin: 0; padding: 0; font-size: 0.95rem; color: #d0e1f9;">
                 Sistem Integrat de Gestiune Operativă
