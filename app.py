@@ -250,7 +250,7 @@ if st.session_state.role == "angajat":
                 
                 col_s1, col_s2, col_s3 = st.columns(3)
                 col_s1.metric("📦 Stoc PALEȚI Disponibil", av_pal)
-                col_s2.metric("📦 Stoc CUTII libere Disp.", av_box)
+                col_s2.metric("📦 Stoc CUTII libere Disponibile", av_box)
                 col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
                 
                 # Creăm 3 coloane: primele două mici (1 și 1) pentru inputuri, și a treia mare (2) care stă goală
