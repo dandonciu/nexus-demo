@@ -6,7 +6,6 @@ import pandas as pd
 import plotly.express as px
 
 st.set_page_config(page_title="NEXUS B2B", page_icon="📦", layout="wide")
-st.set_page_config(page_title="NEXUS B2B", page_icon="📦", layout="wide")
 
 # --- BANNER / ANTET PRINCIPAL NEXUS ---
 st.markdown("""
@@ -60,7 +59,6 @@ if 'schita_comanda' not in st.session_state:
 if 'mod_previzualizare' not in st.session_state:
     st.session_state.mod_previzualizare = False
 
-# [NOU] Pasul 1: Lista pentru comenzile live
 if 'istoric_comenzi_live' not in st.session_state:
     st.session_state.istoric_comenzi_live = []
 
@@ -132,11 +130,18 @@ clients_mock = [
     "🏢 [HQ] BETA DISTRIBUTION"
 ]
 
+# [NOU] DICȚIONARUL DE SINONIME (TRANSLATORUL)
+aliases_map = {
+    "Cârpe albastre (Client 1)": "Lavete Craft Puromore Blue",
+    "Role industriale curățenie (Client 2)": "Lavete Craft Puromore Blue",
+    "Hârtie Mâini albă (General)": "Role Autocut Albe TAD 220m",
+    "Role ștergere Z (Client 3)": "Role Autocut Albe TAD 220m"
+}
+
 def get_total_boxes(prod_key):
     p = st.session_state.db[prod_key]
     return (p['stock_pal'] * p['conversion']) + p['stock_box']
 
-# Funcție pentru a verifica stocul vizual în timpul formării coșului
 def get_available_stock_ui(prod_key):
     total_db = get_total_boxes(prod_key)
     in_cart = sum([(item['Paleti'] * st.session_state.db[prod_key]['conversion']) + item['Cutii'] 
@@ -147,7 +152,6 @@ def get_available_stock_ui(prod_key):
 
 def calculate_delta(prod_key, cmd_pal, cmd_box):
     total_stock = get_total_boxes(prod_key)
-    # Calculăm și ce e deja în coș pentru a nu permite suprasolicitarea stocului real
     in_cart = sum([(item['Paleti'] * st.session_state.db[prod_key]['conversion']) + item['Cutii'] 
                    for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
     
@@ -155,7 +159,7 @@ def calculate_delta(prod_key, cmd_pal, cmd_box):
     total_cmd = (cmd_pal * p['conversion']) + cmd_box + in_cart
     
     if total_cmd > total_stock: return None
-    return True # Doar verificăm dacă e valid, scăderea se face la final
+    return True
 
 # --- ECRAN LOGIN ---
 if not st.session_state.logged_in:
@@ -198,6 +202,7 @@ if st.session_state.role == "angajat":
     # ==========================================
     with tab1:
         client_ales = st.selectbox("1. Selectează Beneficiarul:", clients_mock)
+        
         # --- SISTEM DE NOTIFICARE (BEC ROȘU) ---
         comenzi_pending = [cmd for cmd in st.session_state.istoric_comenzi_live if cmd.get('status_incarcat', False) and not cmd.get('document_emis', False)]
         
@@ -218,10 +223,21 @@ if st.session_state.role == "angajat":
             st.markdown("### 📋 Formare Schiță Comandă")
             
             with st.container():
-                prod_name = st.selectbox("Alege Produsul:", list(st.session_state.db.keys()), on_change=force_reset)
+                
+                # [UPDATE] Dropdown-ul cu Translator integrat
+                all_options = list(st.session_state.db.keys()) + list(aliases_map.keys())
+                selected_option = st.selectbox("Alege Produsul (sau tastează denumirea clientului):", all_options, on_change=force_reset)
+                
+                if selected_option in aliases_map:
+                    prod_name = aliases_map[selected_option]
+                    alias_folosit = selected_option
+                    st.success(f"🔄 Sistemul a tradus automat: **{selected_option}** = **{prod_name}**")
+                else:
+                    prod_name = selected_option
+                    alias_folosit = None
+
                 p_data = st.session_state.db[prod_name]
                 
-                # Afișare modernă coduri
                 st.markdown(f"""
                 <div style='background-color: #f0f7f4; padding: 20px; border-radius: 8px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
                     <div style='display: flex; flex-wrap: wrap; justify-content: space-between;'>
@@ -245,7 +261,6 @@ if st.session_state.role == "angajat":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # [UPDATE] Calculăm stocul disponibil (Stoc total - ce e deja în schiță)
                 av_pal, av_box = get_available_stock_ui(prod_name)
                 
                 col_s1, col_s2, col_s3 = st.columns(3)
@@ -253,7 +268,6 @@ if st.session_state.role == "angajat":
                 col_s2.metric("📦 Stoc CUTII libere Disponibile", av_box)
                 col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
                 
-                # Creăm 3 coloane: primele două mici (1 și 1) pentru inputuri, și a treia mare (2) care stă goală
                 col_q1, col_q2, col_goala = st.columns([1, 1, 1])
                 with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
                 with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
@@ -268,6 +282,7 @@ if st.session_state.role == "angajat":
                         else:
                             st.session_state.schita_comanda.append({
                                 "Produs": prod_name,
+                                "Alias_Folosit": alias_folosit, # Salvez aliasul pt afisare
                                 "Paleti": order_pal,
                                 "Cutii": order_box,
                                 "Cod_Depozit_Pal": p_data['oracle_pal'],
@@ -283,11 +298,19 @@ if st.session_state.role == "angajat":
             if len(st.session_state.schita_comanda) > 0:
                 st.markdown(f"#### 🛒 Produse în comanda curentă (Către: {client_ales})")
                 
-                # [NOU] Metoda brută pentru aliniere la stânga în Schiță
-                df_schita = pd.DataFrame(st.session_state.schita_comanda)[['Produs', 'Paleti', 'Cutii']]
-                df_schita['Paleti'] = df_schita['Paleti'].astype(str)
-                df_schita['Cutii'] = df_schita['Cutii'].astype(str)
+                # [UPDATE] Creăm o listă de afișare care include alias-ul dacă există
+                lista_afisare = []
+                for item in st.session_state.schita_comanda:
+                    nume_afisare = item['Produs']
+                    if item.get('Alias_Folosit'):
+                        nume_afisare += f" (Ref: {item['Alias_Folosit']})"
+                    lista_afisare.append({
+                        "Produs": nume_afisare,
+                        "Paleti": str(item['Paleti']),
+                        "Cutii": str(item['Cutii'])
+                    })
                 
+                df_schita = pd.DataFrame(lista_afisare)
                 st.dataframe(df_schita, use_container_width=True, hide_index=True)
                 
                 col_btn1, col_btn2 = st.columns([1, 3])
@@ -316,11 +339,19 @@ if st.session_state.role == "angajat":
             </div>
             """, unsafe_allow_html=True)
             
-            # [NOU] Metoda brută pentru aliniere la stânga în Previzualizare
-            df_previzualizare = pd.DataFrame(st.session_state.schita_comanda)[['Produs', 'Paleti', 'Cutii']]
-            df_previzualizare['Paleti'] = df_previzualizare['Paleti'].astype(str)
-            df_previzualizare['Cutii'] = df_previzualizare['Cutii'].astype(str)
-            st.table(df_previzualizare)
+            # [UPDATE] Tabel preview cu alias
+            lista_print = []
+            for item in st.session_state.schita_comanda:
+                nume_afisare = item['Produs']
+                if item.get('Alias_Folosit'):
+                    nume_afisare += f" \n[Ref: {item['Alias_Folosit']}]"
+                lista_print.append({
+                    "Produs Facturat / Aviz": nume_afisare,
+                    "Paleti": str(item['Paleti']),
+                    "Cutii": str(item['Cutii'])
+                })
+                
+            st.table(pd.DataFrame(lista_print))
             
             st.warning("⚠️ Vă rugăm să verificați cantitățile. Odată lansată, comanda blochează stocul și ajunge pe tableta operatorilor din depozit.")
             
@@ -332,7 +363,6 @@ if st.session_state.role == "angajat":
             with col_b2:
                 if st.button("🚀 CONFIRMĂ ȘI LANSEAZĂ SPRE dB DEPOZIT", type="primary", use_container_width=True):
                     
-                    # [UPDATE] Agregăm produsele (în caz că sunt pe mai multe rânduri) și scădem din DB
                     totaluri_cos = {}
                     for item in st.session_state.schita_comanda:
                         prod = item['Produs']
@@ -347,10 +377,8 @@ if st.session_state.role == "angajat":
                         st.session_state.db[prod]['stock_pal'] = stoc_ramas // conv
                         st.session_state.db[prod]['stock_box'] = stoc_ramas % conv
                     
-                    # Forțăm Streamlit să recunoască modificarea dicționarului
                     st.session_state.db = st.session_state.db
 
-                    # [NOU] Pasul 2: Salvăm comanda în Live Feed-ul Managerului
                     st.session_state.istoric_comenzi_live.append({
                         "Comanda": f"CMD-{st.session_state.order_number}",
                         "Client": client_ales,
@@ -368,22 +396,17 @@ if st.session_state.role == "angajat":
                     st.rerun()
 
     # ==========================================
-    # TAB 2: STATUS & DOCUMENTE (Nou)
-    # ==========================================
-# ==========================================
     # TAB 2: STATUS & DOCUMENTE
     # ==========================================
     with tab2:
         st.markdown("### 🚚 Confirmare Depozit & Emitere Documente")
         
-        # Citim comenzile din Live Feed (aceleași pe care le vede și Managerul)
         comenzi_lansate = st.session_state.istoric_comenzi_live
         
         if len(comenzi_lansate) == 0:
             st.info("Nicio comandă nu a fost lansată încă spre depozit.")
         else:
             for idx, cmd in enumerate(comenzi_lansate):
-                # Facem un mic "card" vizual pentru fiecare comandă
                 cu_status_incarcat = cmd.get('status_incarcat', False)
                 border_color = "#28a745" if cu_status_incarcat else "#ffc107"
                 bg_color = "#f9fff9" if cu_status_incarcat else "#fffdf5"
@@ -397,28 +420,23 @@ if st.session_state.role == "angajat":
                 
                 col_btn_a, col_btn_b, col_btn_c = st.columns([1, 2, 2])
                 
-                # Butonul prin care simulăm că Stivuitoristul a confirmat din depozit
                 with col_btn_a:
                     if not cu_status_incarcat:
                         if st.button("📲 Simulare: Confirmat Depozit", key=f"sim_dep_{idx}"):
-                            # Schimbăm statusul
                             st.session_state.istoric_comenzi_live[idx]['Status'] = "Încărcat. Gata de printare."
                             st.session_state.istoric_comenzi_live[idx]['status_incarcat'] = True
                             st.rerun()
                     else:
                         st.success("✅ Marfă Încărcată")
 
-                # Butonul final de emitere: face print + trimite la SmartBill
                 with col_btn_b:
                     if cu_status_incarcat:
-                        # Verificăm dacă nu a fost deja emis
                         daca_emis = cmd.get('document_emis', False)
                         if not daca_emis:
                             if st.button("🖨️ EMITE AVIZUL și Declarația de Conformitate (Și trimite la SmartBill și la Depozit)", type="primary", key=f"emit_{idx}"):
                                 st.session_state.istoric_comenzi_live[idx]['document_emis'] = True
                                 st.session_state.istoric_comenzi_live[idx]['Status'] = "Finalizat. Trimis SB."
                                 
-                                # Aici va fi API-ul real pentru SmartBill (acum doar afișăm succes)
                                 st.success("✅ Avizul se tipărește! Datele au fost trimise instant către SmartBill în fundal.")
                                 time.sleep(2)
                                 st.rerun()
@@ -450,7 +468,6 @@ elif st.session_state.role == "manager":
         c_k3.error("Facturi restante clienți: 2")
         
         st.divider()
-        # [NOU] Pasul 3: Live Feed Comenzi în tab-ul operativ
         st.subheader("🔴 LIVE FEED: Comenzi Noi (Depozit)")
         if len(st.session_state.istoric_comenzi_live) > 0:
             df_live = pd.DataFrame(st.session_state.istoric_comenzi_live)
