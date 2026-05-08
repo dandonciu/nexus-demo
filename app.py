@@ -170,7 +170,7 @@ if not st.session_state.logged_in:
         with st.form("login_form"):
             pwd = st.text_input("Parolă", type="password")
             if st.form_submit_button("Log In (Enter)"):
-                if pwd in ["angajat", "manager"]:
+                if pwd in ["angajat", "manager-no"]:
                     st.session_state.logged_in = True
                     st.session_state.role = pwd
                     st.rerun()
