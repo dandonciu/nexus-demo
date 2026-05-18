@@ -130,7 +130,7 @@ clients_mock = [
     "🏢 [HQ] BETA DISTRIBUTION"
 ]
 
-# DICȚIONARUL DE SINONIME (TRANSLATORUL)
+# DICȚIONARUL DE SINONIME (TRANSLATORUL PENTRU ALIAS-URI)
 aliases_map = {
     "Cârpe albastre (Client 1)": "Lavete Craft Puromore Blue",
     "Role industriale curățenie (Client 2)": "Lavete Craft Puromore Blue",
@@ -324,7 +324,7 @@ if st.session_state.role == "angajat":
             else:
                 st.info("Schița este goală. Adăugați produse pentru a forma o comandă.")
 
-        # --- ECRAN B: PREVIZUALIZARE & TRIMITERE (PRISMA OPTICĂ & ALIAS) ---
+        # --- ECRAN B: PREVIZUALIZARE & SALVARE PAYLOAD-URI SCINDATE (PRISMA OPTICĂ & ALIAS) ---
         else:
             st.markdown("### 🔍 Previzualizare Aviz (PRISMA OPTICĂ)")
             
@@ -337,55 +337,49 @@ if st.session_state.role == "angajat":
             """, unsafe_allow_html=True)
             
             # =========================================================
-            # --- START CONCEPT 1 & 2: PRISMA OPTICĂ ȘI ALIAS-URI ---
+            # --- CONSTRUIREA EFECTIVA A CELOR 2 PAYLOAD-URI PENTRU DB ---
             # =========================================================
+            payload_logistic_curent = []
+            payload_fiscal_curent = []
             
+            for item in st.session_state.schita_comanda:
+                # 1. Creare payload LOGISTIC (Sparge in Paleti si Cutii pentru Stivuitorist)
+                if item['Paleti'] > 0:
+                    payload_logistic_curent.append({
+                        "Cod Acțiune Depozit": item['Cod_Depozit_Pal'],
+                        "Cantitate (Buc)": item['Paleti'],
+                        "Tip Ambalaj": "Palet Sigilat"
+                    })
+                if item['Cutii'] > 0:
+                    payload_logistic_curent.append({
+                        "Cod Acțiune Depozit": item['Cod_Depozit_Box'],
+                        "Cantitate (Buc)": item['Cutii'],
+                        "Tip Ambalaj": "Cutie Fracție"
+                    })
+                
+                # 2. Creare payload FISCAL (Reunificat matematic + adăugare Alias)
+                nume_oficial = item['Produs']
+                conv = st.session_state.db[nume_oficial]['conversion']
+                total_unitati = (item['Paleti'] * conv) + item['Cutii']
+                referinta = f"Ref: {item['Alias_Folosit']}" if item.get('Alias_Folosit') else "-"
+                
+                payload_fiscal_curent.append({
+                    "Nomenclator Oficial (SmartBill)": nume_oficial,
+                    "Cantitate Totală Facturată": total_unitati,
+                    "Observații / Alias Client": referinta
+                })
+
             col_prism1, col_prism2 = st.columns(2)
             
             with col_prism1:
-                st.markdown("#### 📦 FAȚA LOGISTICĂ")
-                st.caption("Către Depozit/Oracle. Decuplează ambalajele pentru Picking rapid.")
-                lista_logistica = []
-                for item in st.session_state.schita_comanda:
-                    # Rând pentru Paleți (doar dacă e > 0)
-                    if item['Paleti'] > 0:
-                        lista_logistica.append({
-                            "Cod Acțiune Depozit": item['Cod_Depozit_Pal'],
-                            "Cantitate": f"{item['Paleti']} (Buc)"
-                        })
-                    # Rând pentru Cutii/Fracții (doar dacă e > 0)
-                    if item['Cutii'] > 0:
-                        lista_logistica.append({
-                            "Cod Acțiune Depozit": item['Cod_Depozit_Box'],
-                            "Cantitate": f"{item['Cutii']} (Buc)"
-                        })
-                st.dataframe(pd.DataFrame(lista_logistica), hide_index=True, use_container_width=True)
+                st.markdown("#### 📦 Ce pleacă spre DEPOZIT (Linii logistice)")
+                st.dataframe(pd.DataFrame(payload_logistic_curent), hide_index=True, use_container_width=True)
 
             with col_prism2:
-                st.markdown("#### 🧾 FAȚA FISCALĂ")
-                st.caption("Către SmartBill. Reunifică produsele și adaugă Alias-ul cerut.")
-                lista_fiscala = []
-                for item in st.session_state.schita_comanda:
-                    nume_oficial = item['Produs']
-                    conv = st.session_state.db[nume_oficial]['conversion']
-                    # Reunificare matematică
-                    total_unitati = (item['Paleti'] * conv) + item['Cutii']
-                    
-                    # Inserare Alias sub formă de text informativ
-                    referinta = f"Ref. Cld: {item['Alias_Folosit']}" if item.get('Alias_Folosit') else "-"
-                    
-                    lista_fiscala.append({
-                        "Nomenclator Oficial": nume_oficial,
-                        "Cantitate Facturată": f"{total_unitati} (Role/Cutii)",
-                        "Observații / Alias": referinta
-                    })
-                st.dataframe(pd.DataFrame(lista_fiscala), hide_index=True, use_container_width=True)
-                
-            # =========================================================
-            # --- END CONCEPT 1 & 2 ---
-            # =========================================================
+                st.markdown("#### 🧾 Ce pleacă spre SMARTBILL (Linii fiscale)")
+                st.dataframe(pd.DataFrame(payload_fiscal_curent), hide_index=True, use_container_width=True)
 
-            st.warning("⚠️ Vă rugăm să verificați conversiile. Odată lansată, comanda blochează stocul și pleacă spre tableta operatorilor din depozit sub forma Feței Logistice.")
+            st.warning("⚠️ Vă rugăm să verificați conversiile. La apăsarea butonului de Lansare, comanda va fi salvată scindat: Depozitul primește Payload-ul Logistic, iar SmartBill primește Payload-ul Fiscal.")
             
             col_b1, col_b2 = st.columns(2)
             with col_b1:
@@ -410,12 +404,14 @@ if st.session_state.role == "angajat":
                         st.session_state.db[prod]['stock_pal'] = stoc_ramas // conv
                         st.session_state.db[prod]['stock_box'] = stoc_ramas % conv
                     
-                    st.session_state.db = st.session_state.db
-
+                    # Salvarea efectiva in istoric a celor 2 payload-uri distincte
                     st.session_state.istoric_comenzi_live.append({
                         "Comanda": f"CMD-{st.session_state.order_number}",
                         "Client": client_ales,
-                        "Articole": len(st.session_state.schita_comanda),
+                        "Linii_Logistice": len(payload_logistic_curent),
+                        "Linii_Fiscale": len(payload_fiscal_curent),
+                        "Payload_Logistic": payload_logistic_curent,
+                        "Payload_Fiscal": payload_fiscal_curent,
                         "Status": "Așteaptă Încărcare",
                         "Data_Ora": datetime.now().strftime("%H:%M:%S")
                     })
@@ -447,9 +443,16 @@ if st.session_state.role == "angajat":
                 st.markdown(f"""
                 <div style='border-left: 5px solid {border_color}; background-color: {bg_color}; padding: 15px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>
                     <h4 style='margin-top: 0; color: #003366;'>{cmd['Comanda']} - {cmd['Client']}</h4>
-                    <p style='margin-bottom: 0;'><b>Articole:</b> {cmd['Articole']} | <b>Ora lansării:</b> {cmd['Data_Ora']}</p>
+                    <p style='margin-bottom: 0;'><b>Linii Logistice:</b> {cmd['Linii_Logistice']} | <b>Ora lansării:</b> {cmd['Data_Ora']}</p>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # Vizualizare Payload-uri in Status (Dovada Prisma Optica)
+                with st.expander(f"📦 Vezi liniile primite pe tableta din Depozit ({cmd['Linii_Logistice']} linii)"):
+                    st.table(pd.DataFrame(cmd['Payload_Logistic']))
+                
+                with st.expander(f"🧾 Vezi datele pregătite pentru SmartBill ({cmd['Linii_Fiscale']} linii)"):
+                    st.table(pd.DataFrame(cmd['Payload_Fiscal']))
                 
                 col_btn_a, col_btn_b, col_btn_c = st.columns([1, 2, 2])
                 
@@ -466,7 +469,7 @@ if st.session_state.role == "angajat":
                     if cu_status_incarcat:
                         daca_emis = cmd.get('document_emis', False)
                         if not daca_emis:
-                            if st.button("🖨️ EMITE AVIZUL (Se va printa formatul 'Față Fiscală')", type="primary", key=f"emit_{idx}"):
+                            if st.button("🖨️ EMITE AVIZUL (Se va folosi 'Fața Fiscală')", type="primary", key=f"emit_{idx}"):
                                 st.session_state.istoric_comenzi_live[idx]['document_emis'] = True
                                 st.session_state.istoric_comenzi_live[idx]['Status'] = "Finalizat. Trimis SB."
                                 
@@ -504,7 +507,8 @@ elif st.session_state.role == "manager":
         st.subheader("🔴 LIVE FEED: Comenzi Noi (Depozit)")
         if len(st.session_state.istoric_comenzi_live) > 0:
             df_live = pd.DataFrame(st.session_state.istoric_comenzi_live)
-            st.dataframe(df_live, use_container_width=True, hide_index=True)
+            # Afisam doar coloanele vizibile necesare pt manager, fara sa tiparim tot array-ul intern de JSON
+            st.dataframe(df_live[['Comanda', 'Client', 'Linii_Logistice', 'Status', 'Data_Ora']], use_container_width=True, hide_index=True)
         else:
             st.info("Nicio comandă nouă lansată astăzi.")
             
