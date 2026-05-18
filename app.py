@@ -130,7 +130,7 @@ clients_mock = [
     "🏢 [HQ] BETA DISTRIBUTION"
 ]
 
-# [NOU] DICȚIONARUL DE SINONIME (TRANSLATORUL)
+# DICȚIONARUL DE SINONIME (TRANSLATORUL)
 aliases_map = {
     "Cârpe albastre (Client 1)": "Lavete Craft Puromore Blue",
     "Role industriale curățenie (Client 2)": "Lavete Craft Puromore Blue",
@@ -224,7 +224,7 @@ if st.session_state.role == "angajat":
             
             with st.container():
                 
-                # [UPDATE] Dropdown-ul cu Translator integrat
+                # Dropdown-ul cu Translator integrat
                 all_options = list(st.session_state.db.keys()) + list(aliases_map.keys())
                 selected_option = st.selectbox("Alege Produsul (sau tastează denumirea clientului):", all_options, on_change=force_reset)
                 
@@ -282,7 +282,7 @@ if st.session_state.role == "angajat":
                         else:
                             st.session_state.schita_comanda.append({
                                 "Produs": prod_name,
-                                "Alias_Folosit": alias_folosit, # Salvez aliasul pt afisare
+                                "Alias_Folosit": alias_folosit,
                                 "Paleti": order_pal,
                                 "Cutii": order_box,
                                 "Cod_Depozit_Pal": p_data['oracle_pal'],
@@ -298,7 +298,6 @@ if st.session_state.role == "angajat":
             if len(st.session_state.schita_comanda) > 0:
                 st.markdown(f"#### 🛒 Produse în comanda curentă (Către: {client_ales})")
                 
-                # [UPDATE] Creăm o listă de afișare care include alias-ul dacă există
                 lista_afisare = []
                 for item in st.session_state.schita_comanda:
                     nume_afisare = item['Produs']
@@ -325,44 +324,78 @@ if st.session_state.role == "angajat":
             else:
                 st.info("Schița este goală. Adăugați produse pentru a forma o comandă.")
 
-        # --- ECRAN B: PREVIZUALIZARE & TRIMITERE ---
+        # --- ECRAN B: PREVIZUALIZARE & TRIMITERE (PRISMA OPTICĂ & ALIAS) ---
         else:
-            st.markdown("### 🔍 Previzualizare Aviz (Înainte de Trimitere)")
+            st.markdown("### 🔍 Previzualizare Aviz (PRISMA OPTICĂ)")
             
             st.markdown(f"""
             <div style='border: 1px solid #ccc; padding: 20px; border-radius: 5px; background-color: #fff;'>
-                <h4 style='text-align: center; color: #003366;'>PROIECT AVIZ EXPEDIȚIE - NEXUS</h4>
-                <p><b>Data:</b> {data_azi}<br>
-                <b>Client Beneficiar:</b> {client_ales}<br>
-                <b>Nr. Comandă Interne:</b> CMD-{st.session_state.order_number}</p>
+                <h4 style='text-align: center; color: #003366;'>SISTEM AUTO-CONVERTOR: LOGISTIC vs FISCAL</h4>
+                <p><b>Data:</b> {data_azi} | <b>Beneficiar:</b> {client_ales} | <b>Nr. Cmd:</b> CMD-{st.session_state.order_number}</p>
                 <hr>
             </div>
             """, unsafe_allow_html=True)
             
-            # [UPDATE] Tabel preview cu alias
-            lista_print = []
-            for item in st.session_state.schita_comanda:
-                nume_afisare = item['Produs']
-                if item.get('Alias_Folosit'):
-                    nume_afisare += f" \n[Ref: {item['Alias_Folosit']}]"
-                lista_print.append({
-                    "Produs Facturat / Aviz": nume_afisare,
-                    "Paleti": str(item['Paleti']),
-                    "Cutii": str(item['Cutii'])
-                })
-                
-            st.table(pd.DataFrame(lista_print))
+            # =========================================================
+            # --- START CONCEPT 1 & 2: PRISMA OPTICĂ ȘI ALIAS-URI ---
+            # =========================================================
             
-            st.warning("⚠️ Vă rugăm să verificați cantitățile. Odată lansată, comanda blochează stocul și ajunge pe tableta operatorilor din depozit.")
+            col_prism1, col_prism2 = st.columns(2)
+            
+            with col_prism1:
+                st.markdown("#### 📦 FAȚA LOGISTICĂ")
+                st.caption("Către Depozit/Oracle. Decuplează ambalajele pentru Picking rapid.")
+                lista_logistica = []
+                for item in st.session_state.schita_comanda:
+                    # Rând pentru Paleți (doar dacă e > 0)
+                    if item['Paleti'] > 0:
+                        lista_logistica.append({
+                            "Cod Acțiune Depozit": item['Cod_Depozit_Pal'],
+                            "Cantitate": f"{item['Paleti']} (Buc)"
+                        })
+                    # Rând pentru Cutii/Fracții (doar dacă e > 0)
+                    if item['Cutii'] > 0:
+                        lista_logistica.append({
+                            "Cod Acțiune Depozit": item['Cod_Depozit_Box'],
+                            "Cantitate": f"{item['Cutii']} (Buc)"
+                        })
+                st.dataframe(pd.DataFrame(lista_logistica), hide_index=True, use_container_width=True)
+
+            with col_prism2:
+                st.markdown("#### 🧾 FAȚA FISCALĂ")
+                st.caption("Către SmartBill. Reunifică produsele și adaugă Alias-ul cerut.")
+                lista_fiscala = []
+                for item in st.session_state.schita_comanda:
+                    nume_oficial = item['Produs']
+                    conv = st.session_state.db[nume_oficial]['conversion']
+                    # Reunificare matematică
+                    total_unitati = (item['Paleti'] * conv) + item['Cutii']
+                    
+                    # Inserare Alias sub formă de text informativ
+                    referinta = f"Ref. Cld: {item['Alias_Folosit']}" if item.get('Alias_Folosit') else "-"
+                    
+                    lista_fiscala.append({
+                        "Nomenclator Oficial": nume_oficial,
+                        "Cantitate Facturată": f"{total_unitati} (Role/Cutii)",
+                        "Observații / Alias": referinta
+                    })
+                st.dataframe(pd.DataFrame(lista_fiscala), hide_index=True, use_container_width=True)
+                
+            # =========================================================
+            # --- END CONCEPT 1 & 2 ---
+            # =========================================================
+
+            st.warning("⚠️ Vă rugăm să verificați conversiile. Odată lansată, comanda blochează stocul și pleacă spre tableta operatorilor din depozit sub forma Feței Logistice.")
             
             col_b1, col_b2 = st.columns(2)
             with col_b1:
-                if st.button("🔙 Întoarce-te (Mai adaugă produse)"):
+                if st.button("🔙 Întoarce-te (Editează coșul)"):
                     st.session_state.mod_previzualizare = False
                     st.rerun()
             with col_b2:
                 if st.button("🚀 CONFIRMĂ ȘI LANSEAZĂ SPRE dB DEPOZIT", type="primary", use_container_width=True):
                     
+                    # Scăderea automată a stocului
                     totaluri_cos = {}
                     for item in st.session_state.schita_comanda:
                         prod = item['Produs']
@@ -433,15 +466,15 @@ if st.session_state.role == "angajat":
                     if cu_status_incarcat:
                         daca_emis = cmd.get('document_emis', False)
                         if not daca_emis:
-                            if st.button("🖨️ EMITE AVIZUL și Declarația de Conformitate (Și trimite la SmartBill și la Depozit)", type="primary", key=f"emit_{idx}"):
+                            if st.button("🖨️ EMITE AVIZUL (Se va printa formatul 'Față Fiscală')", type="primary", key=f"emit_{idx}"):
                                 st.session_state.istoric_comenzi_live[idx]['document_emis'] = True
                                 st.session_state.istoric_comenzi_live[idx]['Status'] = "Finalizat. Trimis SB."
                                 
-                                st.success("✅ Avizul se tipărește! Datele au fost trimise instant către SmartBill în fundal.")
+                                st.success("✅ Avizul se tipărește unitar! Datele comerciale au fost transmise către SmartBill.")
                                 time.sleep(2)
                                 st.rerun()
                         else:
-                            st.info("Aviz și Decl. Conf. Emise. Documente finalizate trimise la SmartBill și la Depozit.")
+                            st.info("Aviz Emis. Linii comerciale finalizate și trimise la SmartBill.")
                 st.divider()
 
     # ==========================================
