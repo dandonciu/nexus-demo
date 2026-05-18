@@ -53,8 +53,11 @@ if 'order_number' not in st.session_state:
 if 'reset_counter' not in st.session_state:
     st.session_state.reset_counter = 0
 
+# Mecanism de protecție memorie (evităm eroarea KeyError dacă rămân date vechi în cache)
 if 'schita_comanda' not in st.session_state:
     st.session_state.schita_comanda = []
+elif len(st.session_state.schita_comanda) > 0 and 'Cantitate' not in st.session_state.schita_comanda[0]:
+    st.session_state.schita_comanda = [] # Resetăm coșul dacă detectăm structura veche
     
 if 'mod_previzualizare' not in st.session_state:
     st.session_state.mod_previzualizare = False
@@ -143,13 +146,14 @@ def get_total_boxes(prod_key):
 
 def get_available_stock_ui(prod_key):
     total_db = get_total_boxes(prod_key)
-    in_cart = sum([item['Cantitate'] for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
+    # Folosim .get() pentru siguranta suprema impotriva erorilor de memorie
+    in_cart = sum([item.get('Cantitate', 0) for item in st.session_state.schita_comanda if item.get('Produs') == prod_key])
     rem = total_db - in_cart
     return rem
 
 def calculate_delta(prod_key, order_qty):
     total_stock = get_total_boxes(prod_key)
-    in_cart = sum([item['Cantitate'] for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
+    in_cart = sum([item.get('Cantitate', 0) for item in st.session_state.schita_comanda if item.get('Produs') == prod_key])
     
     total_cmd = order_qty + in_cart
     if total_cmd > total_stock: return False
@@ -254,11 +258,9 @@ if st.session_state.role == "angajat":
                 av_total = get_available_stock_ui(prod_name)
                 
                 col_s1, col_s2, col_s3 = st.columns(3)
-                col_s1.metric("📦 Stoc TOTAL Disponibil (Cutii)", av_total)
+                col_s1.metric("📦 Stoc TOTAL Disponibil (Cutii/Role)", av_total)
                 col_s2.metric("🔄 Conversie (Cutii/Palet)", f"{p_data['conversion']} buc")
                 
-                # [UPDATE CONCEPT 1] INPUT UNITAR. 
-                # Angajatul scrie direct 125, si Nexus face matematica.
                 col_q1, col_goala = st.columns([1, 2])
                 with col_q1: 
                     order_qty = st.number_input(f"Cantitate cerută de client (Cutii/Role):", min_value=1, step=1, key=f'input_qty_{st.session_state.reset_counter}')
@@ -332,7 +334,7 @@ if st.session_state.role == "angajat":
                 conv = st.session_state.db[nume_oficial]['conversion']
                 qty = item['Cantitate']
                 
-                # MATEMATICA NEXUS: Scindarea automată a comenzii de "125 bucati"
+                # MATEMATICA NEXUS: Scindarea automată a comenzii de "125 bucati" in "1 palet si 5 cutii"
                 pallets_to_ship = qty // conv
                 boxes_to_ship = qty % conv
                 
