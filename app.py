@@ -130,7 +130,6 @@ clients_mock = [
     "🏢 [HQ] BETA DISTRIBUTION"
 ]
 
-# DICȚIONARUL DE SINONIME (TRANSLATORUL PENTRU ALIAS-URI)
 aliases_map = {
     "Cârpe albastre (Client 1)": "Lavete Craft Puromore Blue",
     "Role industriale curățenie (Client 2)": "Lavete Craft Puromore Blue",
@@ -144,21 +143,16 @@ def get_total_boxes(prod_key):
 
 def get_available_stock_ui(prod_key):
     total_db = get_total_boxes(prod_key)
-    in_cart = sum([(item['Paleti'] * st.session_state.db[prod_key]['conversion']) + item['Cutii'] 
-                   for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
+    in_cart = sum([item['Cantitate'] for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
     rem = total_db - in_cart
-    conv = st.session_state.db[prod_key]['conversion']
-    return rem // conv, rem % conv
+    return rem
 
-def calculate_delta(prod_key, cmd_pal, cmd_box):
+def calculate_delta(prod_key, order_qty):
     total_stock = get_total_boxes(prod_key)
-    in_cart = sum([(item['Paleti'] * st.session_state.db[prod_key]['conversion']) + item['Cutii'] 
-                   for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
+    in_cart = sum([item['Cantitate'] for item in st.session_state.schita_comanda if item['Produs'] == prod_key])
     
-    p = st.session_state.db[prod_key]
-    total_cmd = (cmd_pal * p['conversion']) + cmd_box + in_cart
-    
-    if total_cmd > total_stock: return None
+    total_cmd = order_qty + in_cart
+    if total_cmd > total_stock: return False
     return True
 
 # --- ECRAN LOGIN ---
@@ -203,7 +197,6 @@ if st.session_state.role == "angajat":
     with tab1:
         client_ales = st.selectbox("1. Selectează Beneficiarul:", clients_mock)
         
-        # --- SISTEM DE NOTIFICARE (BEC ROȘU) ---
         comenzi_pending = [cmd for cmd in st.session_state.istoric_comenzi_live if cmd.get('status_incarcat', False) and not cmd.get('document_emis', False)]
         
         if len(comenzi_pending) > 0:
@@ -216,15 +209,12 @@ if st.session_state.role == "angajat":
                 </div>
             </div>
             """, unsafe_allow_html=True)
-        # --------------------------------------
         
-        # --- ECRAN A: ADĂUGARE ÎN SCHIȚĂ ---
         if not st.session_state.mod_previzualizare:
             st.markdown("### 📋 Formare Schiță Comandă")
             
             with st.container():
                 
-                # Dropdown-ul cu Translator integrat
                 all_options = list(st.session_state.db.keys()) + list(aliases_map.keys())
                 selected_option = st.selectbox("Alege Produsul (sau tastează denumirea clientului):", all_options, on_change=force_reset)
                 
@@ -261,40 +251,36 @@ if st.session_state.role == "angajat":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                av_pal, av_box = get_available_stock_ui(prod_name)
+                av_total = get_available_stock_ui(prod_name)
                 
                 col_s1, col_s2, col_s3 = st.columns(3)
-                col_s1.metric("📦 Stoc PALEȚI Disponibil", av_pal)
-                col_s2.metric("📦 Stoc CUTII libere Disponibile", av_box)
-                col_s3.metric("🔄 Cutii per Palet", f"{p_data['conversion']} buc")
+                col_s1.metric("📦 Stoc TOTAL Disponibil (Cutii)", av_total)
+                col_s2.metric("🔄 Conversie (Cutii/Palet)", f"{p_data['conversion']} buc")
                 
-                col_q1, col_q2, col_goala = st.columns([1, 1, 1])
-                with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
-                with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
+                # [UPDATE CONCEPT 1] INPUT UNITAR. 
+                # Angajatul scrie direct 125, si Nexus face matematica.
+                col_q1, col_goala = st.columns([1, 2])
+                with col_q1: 
+                    order_qty = st.number_input(f"Cantitate cerută de client (Cutii/Role):", min_value=1, step=1, key=f'input_qty_{st.session_state.reset_counter}')
                 
                 if st.button("➕ Adaugă în Listă"):
-                    if order_pal == 0 and order_box == 0:
-                        st.warning("Introduceți o cantitate înainte de a adăuga.")
+                    is_valid = calculate_delta(prod_name, order_qty)
+                    if not is_valid:
+                        st.error("❌ STOC INSUFICIENT pentru această cantitate!")
                     else:
-                        is_valid = calculate_delta(prod_name, order_pal, order_box)
-                        if not is_valid:
-                            st.error("❌ STOC INSUFICIENT pentru această cantitate!")
-                        else:
-                            st.session_state.schita_comanda.append({
-                                "Produs": prod_name,
-                                "Alias_Folosit": alias_folosit,
-                                "Paleti": order_pal,
-                                "Cutii": order_box,
-                                "Cod_Depozit_Pal": p_data['oracle_pal'],
-                                "Cod_Depozit_Box": p_data['oracle_box']
-                            })
-                            st.success(f"Adăugat: {prod_name} ({order_pal} Pal, {order_box} Cutii)")
-                            force_reset()
-                            st.rerun()
+                        st.session_state.schita_comanda.append({
+                            "Produs": prod_name,
+                            "Alias_Folosit": alias_folosit,
+                            "Cantitate": order_qty,
+                            "Cod_Depozit_Pal": p_data['oracle_pal'],
+                            "Cod_Depozit_Box": p_data['oracle_box']
+                        })
+                        st.success(f"Adăugat: {prod_name} ({order_qty} bucăți total)")
+                        force_reset()
+                        st.rerun()
 
             st.divider()
 
-            # --- ZONA DE AFIȘARE A SCHIȚEI ---
             if len(st.session_state.schita_comanda) > 0:
                 st.markdown(f"#### 🛒 Produse în comanda curentă (Către: {client_ales})")
                 
@@ -305,8 +291,7 @@ if st.session_state.role == "angajat":
                         nume_afisare += f" (Ref: {item['Alias_Folosit']})"
                     lista_afisare.append({
                         "Produs": nume_afisare,
-                        "Paleti": str(item['Paleti']),
-                        "Cutii": str(item['Cutii'])
+                        "Cantitate Cerută (Total)": f"{item['Cantitate']} buc"
                     })
                 
                 df_schita = pd.DataFrame(lista_afisare)
@@ -343,29 +328,33 @@ if st.session_state.role == "angajat":
             payload_fiscal_curent = []
             
             for item in st.session_state.schita_comanda:
-                # 1. Creare payload LOGISTIC (Sparge in Paleti si Cutii pentru Stivuitorist)
-                if item['Paleti'] > 0:
+                nume_oficial = item['Produs']
+                conv = st.session_state.db[nume_oficial]['conversion']
+                qty = item['Cantitate']
+                
+                # MATEMATICA NEXUS: Scindarea automată a comenzii de "125 bucati"
+                pallets_to_ship = qty // conv
+                boxes_to_ship = qty % conv
+                
+                # 1. Creare payload LOGISTIC (Sparge pe coduri specifice depozitului)
+                if pallets_to_ship > 0:
                     payload_logistic_curent.append({
                         "Cod Acțiune Depozit": item['Cod_Depozit_Pal'],
-                        "Cantitate (Buc)": item['Paleti'],
+                        "Cantitate (Buc)": pallets_to_ship,
                         "Tip Ambalaj": "Palet Sigilat"
                     })
-                if item['Cutii'] > 0:
+                if boxes_to_ship > 0:
                     payload_logistic_curent.append({
                         "Cod Acțiune Depozit": item['Cod_Depozit_Box'],
-                        "Cantitate (Buc)": item['Cutii'],
+                        "Cantitate (Buc)": boxes_to_ship,
                         "Tip Ambalaj": "Cutie Fracție"
                     })
                 
-                # 2. Creare payload FISCAL (Reunificat matematic + adăugare Alias)
-                nume_oficial = item['Produs']
-                conv = st.session_state.db[nume_oficial]['conversion']
-                total_unitati = (item['Paleti'] * conv) + item['Cutii']
+                # 2. Creare payload FISCAL (Păstrează cantitatea totală cerută)
                 referinta = f"Ref: {item['Alias_Folosit']}" if item.get('Alias_Folosit') else "-"
-                
                 payload_fiscal_curent.append({
                     "Nomenclator Oficial (SmartBill)": nume_oficial,
-                    "Cantitate Totală Facturată": total_unitati,
+                    "Cantitate Totală Facturată": qty,
                     "Observații / Alias Client": referinta
                 })
 
@@ -379,7 +368,7 @@ if st.session_state.role == "angajat":
                 st.markdown("#### 🧾 Ce pleacă spre SMARTBILL (Linii fiscale)")
                 st.dataframe(pd.DataFrame(payload_fiscal_curent), hide_index=True, use_container_width=True)
 
-            st.warning("⚠️ Vă rugăm să verificați conversiile. La apăsarea butonului de Lansare, comanda va fi salvată scindat: Depozitul primește Payload-ul Logistic, iar SmartBill primește Payload-ul Fiscal.")
+            st.warning("⚠️ Odată lansată, sistemul scindează automat comanda pentru stivuitorist, bazat pe rata de conversie a produsului.")
             
             col_b1, col_b2 = st.columns(2)
             with col_b1:
@@ -393,18 +382,16 @@ if st.session_state.role == "angajat":
                     totaluri_cos = {}
                     for item in st.session_state.schita_comanda:
                         prod = item['Produs']
-                        cutii_total_item = (item['Paleti'] * st.session_state.db[prod]['conversion']) + item['Cutii']
-                        totaluri_cos[prod] = totaluri_cos.get(prod, 0) + cutii_total_item
+                        totaluri_cos[prod] = totaluri_cos.get(prod, 0) + item['Cantitate']
                         
-                    for prod, cutii_de_scazut in totaluri_cos.items():
+                    for prod, qty_de_scazut in totaluri_cos.items():
                         stoc_curent = get_total_boxes(prod)
-                        stoc_ramas = stoc_curent - cutii_de_scazut
+                        stoc_ramas = stoc_curent - qty_de_scazut
                         conv = st.session_state.db[prod]['conversion']
                         
                         st.session_state.db[prod]['stock_pal'] = stoc_ramas // conv
                         st.session_state.db[prod]['stock_box'] = stoc_ramas % conv
                     
-                    # Salvarea efectiva in istoric a celor 2 payload-uri distincte
                     st.session_state.istoric_comenzi_live.append({
                         "Comanda": f"CMD-{st.session_state.order_number}",
                         "Client": client_ales,
@@ -416,12 +403,12 @@ if st.session_state.role == "angajat":
                         "Data_Ora": datetime.now().strftime("%H:%M:%S")
                     })
 
-                    st.success(f"✅ Comanda CMD-{st.session_state.order_number} a fost trimisă spre dB Depozit!")
+                    st.success(f"✅ Comanda a fost trimisă. dB Depozit a primit {len(payload_logistic_curent)} linii separate!")
                     
                     st.session_state.order_number += 1
                     st.session_state.schita_comanda = []
                     st.session_state.mod_previzualizare = False
-                    time.sleep(1.5)
+                    time.sleep(2)
                     st.rerun()
 
     # ==========================================
@@ -447,7 +434,6 @@ if st.session_state.role == "angajat":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Vizualizare Payload-uri in Status (Dovada Prisma Optica)
                 with st.expander(f"📦 Vezi liniile primite pe tableta din Depozit ({cmd['Linii_Logistice']} linii)"):
                     st.table(pd.DataFrame(cmd['Payload_Logistic']))
                 
@@ -507,7 +493,6 @@ elif st.session_state.role == "manager":
         st.subheader("🔴 LIVE FEED: Comenzi Noi (Depozit)")
         if len(st.session_state.istoric_comenzi_live) > 0:
             df_live = pd.DataFrame(st.session_state.istoric_comenzi_live)
-            # Afisam doar coloanele vizibile necesare pt manager, fara sa tiparim tot array-ul intern de JSON
             st.dataframe(df_live[['Comanda', 'Client', 'Linii_Logistice', 'Status', 'Data_Ora']], use_container_width=True, hide_index=True)
         else:
             st.info("Nicio comandă nouă lansată astăzi.")
