@@ -174,7 +174,7 @@ if not st.session_state.logged_in:
         with st.form("login_form"):
             pwd = st.text_input("Parolă", type="password")
             if st.form_submit_button("Log In (Enter)"):
-                if pwd in ["angajat-no", "manager-no"]:
+                if pwd in ["angajat", "manager"]:
                     st.session_state.logged_in = True
                     st.session_state.role = pwd
                     st.rerun()
@@ -246,7 +246,7 @@ if st.session_state.role == "angajat":
                             <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_master']}</div>
                         </div>
                         <div style='flex: 1; min-width: 150px; margin-bottom: 10px;'>
-                            <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod NIR</div>
+                            <div style='font-size: 0.85rem; color: #555; margin-bottom: 2px;'>Cod NIR (SmartBill)</div>
                             <div style='font-size: 1.4rem; color: #28a745; font-weight: bold;'>{p_data['cod_nir']}</div>
                         </div>
                         <div style='flex: 1; min-width: 200px; margin-bottom: 10px;'>
@@ -261,7 +261,6 @@ if st.session_state.role == "angajat":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # --- [RESTAURARE] Vizualizarea Iubita: Paleti si Cutii Libere ---
                 av_pal, av_box = get_available_stock_ui(prod_name)
                 
                 col_s1, col_s2, col_s3 = st.columns(3)
@@ -269,7 +268,6 @@ if st.session_state.role == "angajat":
                 col_s2.metric("📦 Stoc CUTII Libere", av_box)
                 col_s3.metric("🔄 Conversie (Cutii/Palet)", f"{p_data['conversion']} buc")
                 
-                # --- [RESTAURARE] Input Dual ---
                 col_q1, col_q2, col_goala = st.columns([1, 1, 1])
                 with col_q1: order_pal = st.number_input("Nr. PALEȚI comandați:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
                 with col_q2: order_box = st.number_input("Nr. CUTII comandate:", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
@@ -284,6 +282,7 @@ if st.session_state.role == "angajat":
                         else:
                             st.session_state.schita_comanda.append({
                                 "Produs": prod_name,
+                                "Cod_NIR": p_data['cod_nir'],
                                 "Alias_Folosit": alias_folosit,
                                 "Paleti": order_pal,
                                 "Cutii": order_box,
@@ -305,11 +304,13 @@ if st.session_state.role == "angajat":
                     if item.get('Alias_Folosit'):
                         nume_afisare += f" (Ref: {item['Alias_Folosit']})"
                     lista_afisare.append({
+                        "Cod SmartBill": item['Cod_NIR'],
                         "Produs": nume_afisare,
                         "Paleți": str(item['Paleti']),
                         "Cutii": str(item['Cutii'])
                     })
                 
+                # Aliniere la stanga in DataFrame (UI Pandas)
                 df_schita = pd.DataFrame(lista_afisare)
                 st.dataframe(df_schita, use_container_width=True, hide_index=True)
                 
@@ -338,7 +339,8 @@ if st.session_state.role == "angajat":
             """, unsafe_allow_html=True)
             
             # =========================================================
-            # --- MATEMATICA NEXUS: AICI SE INTAMPLA MAGIA "AUTO-CONVERTOR" ---
+            # --- MATEMATICA NEXUS: AUTO-CONVERTOR DE BAZA PENTRU UI ---
+            # (In Sesiunea 4 vom integra aici regula FIFO pe fractii)
             # =========================================================
             payload_logistic_curent = []
             payload_fiscal_curent = []
@@ -347,10 +349,8 @@ if st.session_state.role == "angajat":
                 nume_oficial = item['Produs']
                 conv = st.session_state.db[nume_oficial]['conversion']
                 
-                # Pasul 1: Calculam TOTALUL brut introdus de utilizator (ex: 0 Paleti + 125 Cutii = 125 total)
                 total_units = (item['Paleti'] * conv) + item['Cutii']
                 
-                # Pasul 2: Re-optimizam perfect cantitatile pentru Depozit (ex: 125 devine 1 Palet si 5 Cutii)
                 pallets_to_ship = total_units // conv
                 boxes_to_ship = total_units % conv
                 
@@ -358,21 +358,22 @@ if st.session_state.role == "angajat":
                 if pallets_to_ship > 0:
                     payload_logistic_curent.append({
                         "Cod Acțiune Depozit": item['Cod_Depozit_Pal'],
-                        "Cantitate (Buc)": pallets_to_ship,
+                        "Cantitate (Buc)": str(pallets_to_ship),
                         "Tip Ambalaj": "Palet Sigilat"
                     })
                 if boxes_to_ship > 0:
                     payload_logistic_curent.append({
                         "Cod Acțiune Depozit": item['Cod_Depozit_Box'],
-                        "Cantitate (Buc)": boxes_to_ship,
+                        "Cantitate (Buc)": str(boxes_to_ship),
                         "Tip Ambalaj": "Cutie Fracție"
                     })
                 
                 # 2. Creare payload FISCAL (Păstrează cantitatea totală pentru SmartBill)
                 referinta = f"Ref: {item['Alias_Folosit']}" if item.get('Alias_Folosit') else "-"
                 payload_fiscal_curent.append({
-                    "Nomenclator Oficial (SmartBill)": nume_oficial,
-                    "Cantitate Totală Facturată": total_units,
+                    "Cod SB (NIR)": item['Cod_NIR'],
+                    "Nomenclator Oficial": nume_oficial,
+                    "Cantitate Totală (Buc)": str(total_units),
                     "Observații / Alias Client": referinta
                 })
 
@@ -386,7 +387,7 @@ if st.session_state.role == "angajat":
                 st.markdown("#### 🧾 Ce pleacă spre SMARTBILL (Linii fiscale)")
                 st.dataframe(pd.DataFrame(payload_fiscal_curent), hide_index=True, use_container_width=True)
 
-            st.success("✅ **Sistem Auto-Convertor Activ:** Orice combinație de Cutii/Paleți ați introdus a fost optimizată automat pentru eficiența maximă a Stivuitoristului.")
+            st.success("✅ **Sistem Auto-Convertor Activ:** Orice combinație ați introdus a fost optimizată automat pentru eficiența maximă a Stivuitoristului.")
             st.warning("⚠️ Vă rugăm verificați tabelele finale de mai sus înainte de lansare.")
             
             col_b1, col_b2 = st.columns(2)
