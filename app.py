@@ -4,6 +4,7 @@ from datetime import datetime
 import math
 import pandas as pd
 import plotly.express as px
+import pytz
 
 st.set_page_config(page_title="NEXUS B2B", page_icon="📦", layout="wide")
 
@@ -174,7 +175,7 @@ if st.session_state.role == "angajat":
     with col_titlu:
         st.title("⚡ NEXUS Operațional")
     with col_cmd:
-        data_azi = datetime.now().strftime("%d.%m.%Y")
+       data_azi = datetime.now(pytz.timezone('Europe/Bucharest')).strftime("%d.%m.%Y")
         st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
         
     tab1, tab2, tab3 = st.tabs(["🛒 Lansare Comandă", "🚚 Status & Documente", "📥 Recepție Marfă"])
@@ -186,7 +187,7 @@ if st.session_state.role == "angajat":
         comenzi_pending = [cmd for cmd in st.session_state.istoric_comenzi_live if cmd.get('status_incarcat', False) and not cmd.get('document_emis', False)]
         
         if len(comenzi_pending) > 0:
-            ora_alertei = datetime.now().strftime("%H:%M")
+            ora_alertei = datetime.now(pytz.timezone('Europe/Bucharest')).strftime("%H:%M")
             st.markdown(f"""
             <div style='background-color: #fff3f3; border-left: 5px solid #dc3545; padding: 15px; margin-bottom: 20px; border-radius: 4px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>
                 <div style='font-size: 2.2rem; margin-right: 15px;'>🚨</div>
@@ -443,7 +444,7 @@ if st.session_state.role == "angajat":
                         "Payload_Logistic": payload_logistic_curent,
                         "Payload_Fiscal": payload_fiscal_curent,
                         "Status": "Așteaptă Încărcare",
-                        "Data_Ora": datetime.now().strftime("%H:%M:%S")
+                        "Data_Ora": datetime.now(pytz.timezone('Europe/Bucharest')).strftime("%H:%M:%S")
                     })
 
                     st.success("✅ Comanda a fost transmisă! Optimizările WMS au fost aplicate.")
