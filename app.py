@@ -40,7 +40,6 @@ st.markdown("""
 # --- CSS PENTRU EVIDENȚIEREA PAȘILOR DE SELECȚIE ---
 st.markdown("""
     <style>
-    .pas-selectie { font-size: 1.2rem; font-weight: bold; color: #d9534f; margin-bottom: -10px; margin-top: 15px;}
     .stSelectbox label { font-size: 1.1rem !important; font-weight: bold !important; color: #003366 !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -65,26 +64,37 @@ if 'istoric_comenzi_live' not in st.session_state:
 def force_reset():
     st.session_state.reset_counter += 1
 
-if 'db' in st.session_state:
-    del st.session_state['db']
-
 if 'db' not in st.session_state:
     st.session_state.db = {
         "Role Autocut Albe TAD 220m": {
             "cod_master": "MST-BKTp721", "cod_nir": "NIR-4451",
             "oracle_pal": "PAL BKTp721", "oracle_box": "BKTp721",
-            "stock_pal": 3, "stock_box": 10, "conversion": 64,  # 64 cutii pe palet
-            "um_baza": "Role", "conversie_baza": 6,             # 6 role per cutie
+            "stock_pal": 3, "stock_box": 10, "conversion": 64,
+            "um_baza": "Role", "conversie_baza": 6,             
             "descriere": "Role din celuloză pură 100%, 2 straturi, destinate dispenserelor auto-cut.",
-            "livrari_totale": pd.DataFrame() # Golit pt simplitate vizuala in cod
+            "livrari_totale": pd.DataFrame({
+                "Client": [
+                    "🏢 [HQ] SC CORPORATIA ALPHA SRL", "🏢 [HQ] SC CORPORATIA ALPHA SRL", " ├─ Filiala București Nord", " ├─ Filiala Cluj", "🏢 [HQ] BETA DISTRIBUTION", "🏢 [HQ] BETA DISTRIBUTION"
+                ],
+                "Data": ["10-01-2024", "15-02-2024", "12-01-2024", "05-01-2024", "08-01-2024", "14-02-2024"],
+                "Volum_Paleti": [12, 15, 5, 4, 20, 18],
+                "Status_Plata": ["Achitat", "Achitat", "Achitat", "Achitat", "Achitat", "Achitat"]
+            })
         },
         "Lavete Craft Puromore Blue": {
             "cod_master": "MST-70117",  "cod_nir": "NIR-8820",
             "oracle_pal": "PAL 70117", "oracle_box": "70117",
-            "stock_pal": 2, "stock_box": 50, "conversion": 120, # 120 cutii pe palet
-            "um_baza": "Lavete", "conversie_baza": 14,          # 14 lavete per cutie
+            "stock_pal": 2, "stock_box": 50, "conversion": 120, 
+            "um_baza": "Lavete", "conversie_baza": 14,          
             "descriere": "Lavete industriale rezistente la solvenți, culoare albastră, 500 porții/rolă.",
-            "livrari_totale": pd.DataFrame()
+            "livrari_totale": pd.DataFrame({
+                "Client": [
+                    "🏢 [HQ] SC CORPORATIA ALPHA SRL", "🏢 [HQ] SC CORPORATIA ALPHA SRL", " ├─ Filiala București Nord", " ├─ Filiala Cluj", "🏢 [HQ] BETA DISTRIBUTION", "🏢 [HQ] BETA DISTRIBUTION"
+                ],
+                "Data": ["05-01-2024", "12-02-2024", "20-01-2024", "15-01-2024", "10-01-2024", "20-02-2024"],
+                "Volum_Paleti": [5, 8, 2, 8, 15, 20],
+                "Status_Plata": ["Achitat", "Achitat", "Achitat", "Achitat", "Achitat", "Restanță"]
+            })
         }
     }
 
@@ -106,7 +116,7 @@ client_aliases = {
     },
     "🏢 [HQ] BETA DISTRIBUTION": {
         "Hârtie Mâini albă (General)": "Role Autocut Albe TAD 220m",
-        "Cârpe franjurate": "Lavete Craft Puromore Blue"  # Invenția clientului 2 :)
+        "Cârpe franjurate": "Lavete Craft Puromore Blue"
     }
 }
 
@@ -169,7 +179,7 @@ if st.session_state.role == "angajat":
         
     tab1, tab2, tab3 = st.tabs(["🛒 Lansare Comandă", "🚚 Status & Documente", "📥 Recepție Marfă"])
     
-   # ==========================================
+    # ==========================================
     # TAB 1: LANSARE COMANDĂ
     # ==========================================
     with tab1:
@@ -182,7 +192,7 @@ if st.session_state.role == "angajat":
                 <div style='font-size: 2.2rem; margin-right: 15px;'>🚨</div>
                 <div>
                     <h4 style='color: #dc3545; margin: 0;'>ACȚIUNE NECESARĂ ({ora_alertei}): {len(comenzi_pending)} mașină/mașini așteaptă actele la rampă!</h4>
-                    <p style='margin: 0; font-size: 0.95rem; color: #555;'>Treceți în tab-ul <b>'Status & Documente'</b> pentru a emite Avizul și a elibera camionul. Orice întârziere blochează rampa!</p>
+                    <p style='margin: 0; font-size: 0.95rem; color: #555;'>Treceți în tab-ul <b>'Status & Documente'</b> pentru a emite Avizul și a elibera camionul.</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -193,7 +203,6 @@ if st.session_state.role == "angajat":
             
             with st.container():
                 
-                # OBSERVATIA 1: Text aerisit, vizibil, care nu se mai trunchiază
                 st.markdown("<h4 style='color: #d9534f; margin-bottom: 5px;'>1. Selectează Beneficiarul:</h4>", unsafe_allow_html=True)
                 client_ales = st.selectbox("Client", clients_mock, key="select_client", label_visibility="collapsed")
                 
@@ -201,7 +210,7 @@ if st.session_state.role == "angajat":
                 aliasuri_client_curent = client_aliases.get(client_ales, {})
                 produse_disponibile = baza_produse + list(aliasuri_client_curent.keys())
                 
-                st.markdown("<h4 style='color: #d9534f; margin-top: 15px; margin-bottom: 5px;'>2. Alege Produsul (Cautare rapidă):</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #d9534f; margin-top: 15px; margin-bottom: 5px;'>2. Alege Produsul (Căutare rapidă):</h4>", unsafe_allow_html=True)
                 selected_option = st.selectbox("Produs", produse_disponibile, on_change=force_reset, key="select_prod", label_visibility="collapsed")
                 
                 if selected_option in aliasuri_client_curent:
@@ -214,7 +223,6 @@ if st.session_state.role == "angajat":
 
                 p_data = st.session_state.db[prod_name]
                 
-                # OBSERVATIA 3: Am mutat Cod Produs (NEXUS) pe ultima pozitie!
                 st.markdown(f"""
                 <div style='background-color: #f0f7f4; padding: 15px; border-radius: 6px; border-left: 4px solid #28a745; margin-top: 15px; margin-bottom: 20px;'>
                     <div style='display: flex; flex-wrap: wrap; justify-content: space-between;'>
@@ -266,8 +274,6 @@ if st.session_state.role == "angajat":
             if len(st.session_state.schita_comanda) > 0:
                 st.markdown(f"#### 🛒 Produse în comanda curentă (Către: **{client_ales}**)")
                 
-                # OBSERVATIA 4: Cos de cumparaturi interactiv cu butoane de stergere individuala
-                # Construim Header-ul tabelului vizual
                 h1, h2, h3, h4, h5 = st.columns([3, 2, 2, 2, 1])
                 h1.markdown("**Produs**")
                 h2.markdown("**Cod dB (Logistic)**")
@@ -276,7 +282,6 @@ if st.session_state.role == "angajat":
                 h5.markdown("**Acțiune**")
                 st.markdown("<hr style='margin-top: 0px; margin-bottom: 10px;'>", unsafe_allow_html=True)
                 
-                # Randurile tabelului (iteram din lista de produse a comenzii)
                 for idx, item in enumerate(st.session_state.schita_comanda):
                     c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 1])
                     
@@ -297,7 +302,6 @@ if st.session_state.role == "angajat":
                 
                 st.markdown("<hr style='margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
                 
-                # Butoanele de la finalul cosului
                 col_btn1, col_btn2 = st.columns([1, 3])
                 with col_btn1:
                     if st.button("🗑️ Golește toată Lista"):
@@ -312,15 +316,13 @@ if st.session_state.role == "angajat":
                 st.info("Schița este goală. Adăugați produse pentru a forma o comandă.")
 
         # --- ECRAN B: PREVIZUALIZARE & SALVARE PAYLOAD-URI SCINDATE ---
-
-        # --- ECRAN B: PREVIZUALIZARE & SALVARE PAYLOAD-URI SCINDATE ---
         else:
             client_ales_prev = st.session_state.client_temporar_comandat
             st.markdown("### 🔍 Previzualizare Aviz (PRISMA OPTICĂ)")
             
             st.markdown(f"""
             <div style='border: 1px solid #ccc; padding: 20px; border-radius: 5px; background-color: #fff;'>
-                <h4 style='text-align: center; color: #003366;'>MOTOR DE OPZIMIZARE: "REGULA DIMO-NEXUS" ACTIVATĂ</h4>
+                <h4 style='text-align: center; color: #003366;'>MOTOR DE OPTIMIZARE: "REGULA DIMO-NEXUS" ACTIVATĂ</h4>
                 <p><b>Data:</b> {data_azi} | <b>Beneficiar:</b> {client_ales_prev} | <b>Nr. Cmd:</b> CMD-{st.session_state.order_number}</p>
                 <hr>
             </div>
@@ -336,32 +338,27 @@ if st.session_state.role == "angajat":
                 C = item['Cutii']
                 pallets_ordered = item['Paleti']
                 
-                # --- LOGICA 1: WMS / LOGISTIC (Regula Dimo-NEXUS aplicată pe fracții) ---
+                # --- LOGICA WMS / LOGISTIC (Regula Dimo-NEXUS) ---
                 if C > 0:
-                    # Aplicăm pragul dinamic: efort mai mic de a disloca paletul + să nu umplem depozitul cu fracții
                     if (P - C) < C and L < C:
-                        # OPTIMIZARE REVERSE PICKING
                         if pallets_ordered > 0:
                             payload_logistic_curent.append({
                                 "Acțiune / Cod Depozit": item['Cod_Depozit_Pal'],
                                 "Cantitate": str(pallets_ordered),
                                 "U.M. Logistic": "Palet Sigilat"
                             })
-                        
                         payload_logistic_curent.append({
                             "Acțiune / Cod Depozit": item['Cod_Depozit_Pal'],
                             "Cantitate": "1",
                             "U.M. Logistic": f"Palet (Optimizare: EXTRAGE {P - C} cutii și încarcă restul de {C})"
                         })
                     else:
-                        # STANDARD FIFO
                         if pallets_ordered > 0:
                             payload_logistic_curent.append({
                                 "Acțiune / Cod Depozit": item['Cod_Depozit_Pal'],
                                 "Cantitate": str(pallets_ordered),
                                 "U.M. Logistic": "Palet Sigilat"
                             })
-                        
                         if C <= L:
                             payload_logistic_curent.append({
                                 "Acțiune / Cod Depozit": item['Cod_Depozit_Box'],
@@ -369,7 +366,6 @@ if st.session_state.role == "angajat":
                                 "U.M. Logistic": "Cutie Fracție (Culese din stoc liber)"
                             })
                         else:
-                            # C > L -> Golește liberele, apoi sparge 1 palet normal
                             if L > 0:
                                 payload_logistic_curent.append({
                                     "Acțiune / Cod Depozit": item['Cod_Depozit_Box'],
@@ -382,7 +378,6 @@ if st.session_state.role == "angajat":
                                 "U.M. Logistic": "Cutie Fracție (Din palet nou desfăcut)"
                             })
                 else:
-                    # Doar paleți întregi
                     if pallets_ordered > 0:
                         payload_logistic_curent.append({
                             "Acțiune / Cod Depozit": item['Cod_Depozit_Pal'],
@@ -390,7 +385,7 @@ if st.session_state.role == "angajat":
                             "U.M. Logistic": "Palet Sigilat"
                         })
 
-                # --- LOGICA 2: SMARTBILL / FISCAL (Conversie Bază) ---
+                # --- LOGICA SMARTBILL / FISCAL ---
                 total_cutii = (pallets_ordered * P) + C
                 total_unitati_baza = total_cutii * item['Conversie_Baza']
                 
@@ -420,23 +415,18 @@ if st.session_state.role == "angajat":
             with col_b2:
                 if st.button("🚀 CONFIRMĂ ȘI LANSEAZĂ SPRE DEPOZIT", type="primary", use_container_width=True):
                     
-                    # Scăderea stocului logic
                     for item in st.session_state.schita_comanda:
                         prod = item['Produs']
                         P = st.session_state.db[prod]['conversion']
                         C = item['Cutii']
                         pallets_ordered = item['Paleti']
-                        
                         L = st.session_state.db[prod]['stock_box']
                         
-                        # Actualizare stoc în funcție de decizia luată anterior
                         if C > 0:
                             if (P - C) < C and L < C:
-                                # Optimizarea a dislocat 1 palet și a adăugat P-C cutii la L
                                 st.session_state.db[prod]['stock_pal'] -= (pallets_ordered + 1)
                                 st.session_state.db[prod]['stock_box'] += (P - C)
                             else:
-                                # FIFO standard
                                 total_units_to_subtract = (pallets_ordered * P) + C
                                 stoc_curent = get_total_boxes(prod)
                                 stoc_ramas = stoc_curent - total_units_to_subtract
@@ -445,7 +435,6 @@ if st.session_state.role == "angajat":
                         else:
                             st.session_state.db[prod]['stock_pal'] -= pallets_ordered
 
-                    # Salvare comandă în istoric
                     st.session_state.istoric_comenzi_live.append({
                         "Comanda": f"CMD-{st.session_state.order_number}",
                         "Client": client_ales_prev,
@@ -471,9 +460,7 @@ if st.session_state.role == "angajat":
     # ==========================================
     with tab2:
         st.markdown("### 🚚 Confirmare Depozit & Emitere Documente")
-        
         comenzi_lansate = st.session_state.istoric_comenzi_live
-        
         if len(comenzi_lansate) == 0:
             st.info("Nicio comandă nu a fost lansată încă spre depozit.")
         else:
@@ -493,7 +480,6 @@ if st.session_state.role == "angajat":
                     st.table(pd.DataFrame(cmd['Payload_Logistic']))
                 
                 col_btn_a, col_btn_b = st.columns([1, 2])
-                
                 with col_btn_a:
                     if not cu_status_incarcat:
                         if st.button("📲 Simulare: Confirmat Depozit", key=f"sim_dep_{idx}"):
@@ -529,4 +515,66 @@ if st.session_state.role == "angajat":
 # ==========================================
 elif st.session_state.role == "manager":
     st.title("📈 NEXUS Dashboard Manager")
-    st.info("Modulul Manager a rămas neschimbat în această versiune. Logica de optimizare se aplică în modulul Angajat.")
+    
+    tab_op, tab_an = st.tabs(["⚡ A. Situație Operativă (Birou)", "📊 B. Analiză Generală (Ședințe)"])
+    
+    with tab_op:
+        st.subheader("1. Privire de Ansamblu")
+        c_k1, c_k2, c_k3 = st.columns(3)
+        c_k1.success("Livrări în grafic (Azi): 4")
+        c_k2.warning("Recepții în așteptare (SmartBill): 1")
+        c_k3.error("Facturi restante clienți: 2")
+        
+        st.divider()
+        st.subheader("🔴 LIVE FEED: Comenzi Noi (Depozit)")
+        if len(st.session_state.istoric_comenzi_live) > 0:
+            df_live = pd.DataFrame(st.session_state.istoric_comenzi_live)
+            st.dataframe(df_live[['Comanda', 'Client', 'Linii_Logistice', 'Status', 'Data_Ora']], use_container_width=True, hide_index=True)
+        else:
+            st.info("Nicio comandă nouă lansată astăzi.")
+            
+        st.divider()
+        
+        st.subheader("2. Analiză Stoc Punctual")
+        mgr_prod = st.selectbox("Selectare Produs:", list(st.session_state.db.keys()))
+        p_val = st.session_state.db[mgr_prod]
+        
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Paleți Intacți", p_val['stock_pal'])
+        c2.metric("Cutii Libere", p_val['stock_box'])
+        c3.metric("Conversie WMS", f"{p_val['conversion']} cutii/palet")
+        c4.metric("Conversie Fiscală", f"{p_val['conversie_baza']} {p_val['um_baza']}/cutie")
+        
+        if p_val['stock_box'] > (p_val['conversion'] * 0.7):
+            st.error(f"🔴 ATENȚIE: Aveți prea multe cutii libere ({p_val['stock_box']}).")
+        elif p_val['stock_box'] > 0:
+            st.warning("🟠 INFO: Există cutii libere în depozit.")
+        else:
+            st.success("🟢 OPTIM: Nu aveți fracții desfăcute în depozit.")
+                
+    with tab_an:
+        col_m1, col_m2 = st.columns([2, 2])
+        with col_m1: analiza_client = st.selectbox("Selectează Client:", clients_mock)
+        with col_m2: analiza_produs = st.selectbox("Selectează Produs pt. istoric:", list(st.session_state.db.keys()), key="mgr_prod_an")
+        
+        st.markdown(f"#### 📊 Istoric Livrări: **{analiza_produs}** către **{analiza_client}**")
+        
+        df_toate = st.session_state.db[analiza_produs]["livrari_totale"]
+        df_filtrat = df_toate[df_toate['Client'] == analiza_client]
+        
+        if df_filtrat.empty:
+            st.warning(f"Nu există date de livrare pentru {analiza_produs} către {analiza_client}.")
+        else:
+            color_discrete_map = {'Achitat': '#28a745', 'În termen': '#17a2b8', 'Restanță': '#dc3545'}
+            fig = px.bar(
+                df_filtrat, x='Data', y='Volum_Paleti', color='Status_Plata',
+                text='Volum_Paleti', color_discrete_map=color_discrete_map,
+                title="Volum Paleți / Dată Exactă"
+            )
+            fig.update_traces(textposition='outside', width=0.4)
+            fig.update_layout(xaxis_type='category')
+            st.plotly_chart(fig, use_container_width=True)
+            
+            st.markdown("#### 💸 Detalii Tranzacții")
+            def color_status(val): return 'color: #28a745; font-weight:bold;' if val == 'Achitat' else 'color: #dc3545; font-weight:bold;' if 'Restanță' in str(val) else 'color: #17a2b8;'
+            st.dataframe(df_filtrat[['Data', 'Volum_Paleti', 'Status_Plata']].style.map(color_status, subset=['Status_Plata']), hide_index=True)
