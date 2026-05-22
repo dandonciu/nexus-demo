@@ -176,7 +176,7 @@ if st.session_state.role == "angajat":
         st.title("⚡ NEXUS Operațional")
     with col_cmd:
        data_azi = datetime.now(pytz.timezone('Europe/Bucharest')).strftime("%d.%m.%Y")
-        st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
+       st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
         
     tab1, tab2, tab3 = st.tabs(["🛒 Lansare Comandă", "🚚 Status & Documente", "📥 Recepție Marfă"])
     
