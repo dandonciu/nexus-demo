@@ -65,6 +65,9 @@ if 'istoric_comenzi_live' not in st.session_state:
 def force_reset():
     st.session_state.reset_counter += 1
 
+if 'db' in st.session_state:
+    del st.session_state['db']
+
 if 'db' not in st.session_state:
     st.session_state.db = {
         "Role Autocut Albe TAD 220m": {
