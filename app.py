@@ -1,10 +1,10 @@
 import streamlit as st
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import math
 import pandas as pd
 import plotly.express as px
-import pytz
 
 st.set_page_config(page_title="NEXUS B2B", page_icon="📦", layout="wide")
 
@@ -175,7 +175,7 @@ if st.session_state.role == "angajat":
     with col_titlu:
         st.title("⚡ NEXUS Operațional")
     with col_cmd:
-       data_azi = datetime.now(pytz.timezone('Europe/Bucharest')).strftime("%d.%m.%Y")
+       ora_alertei = datetime.now(ZoneInfo('Europe/Bucharest')).strftime("%H:%M")
        st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
         
     tab1, tab2, tab3 = st.tabs(["🛒 Lansare Comandă", "🚚 Status & Documente", "📥 Recepție Marfă"])
@@ -444,7 +444,7 @@ if st.session_state.role == "angajat":
                         "Payload_Logistic": payload_logistic_curent,
                         "Payload_Fiscal": payload_fiscal_curent,
                         "Status": "Așteaptă Încărcare",
-                        "Data_Ora": datetime.now(pytz.timezone('Europe/Bucharest')).strftime("%H:%M:%S")
+                        "Data_Ora": datetime.now(ZoneInfo('Europe/Bucharest')).strftime("%H:%M:%S")
                     })
 
                     st.success("✅ Comanda a fost transmisă! Optimizările WMS au fost aplicate.")
