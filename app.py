@@ -62,8 +62,8 @@ if 'mod_previzualizare' not in st.session_state:
 if 'istoric_comenzi_live' not in st.session_state:
     st.session_state.istoric_comenzi_live = []
 
-def force_reset():
-    st.session_state.reset_counter += 1
+if 'db' in st.session_state:
+    del st.session_state['db']
 
 if 'db' not in st.session_state:
     st.session_state.db = {
@@ -79,7 +79,7 @@ if 'db' not in st.session_state:
             "cod_master": "MST-70117",  "cod_nir": "NIR-8820",
             "oracle_pal": "PAL 70117", "oracle_box": "70117",
             "stock_pal": 2, "stock_box": 50, "conversion": 120, # 120 cutii pe palet
-            "um_baza": "Pachete", "conversie_baza": 4,          # 4 pachete per cutie
+            "um_baza": "Lavete", "conversie_baza": 14,          # 14 lavete per cutie
             "descriere": "Lavete industriale rezistente la solvenți, culoare albastră, 500 porții/rolă.",
             "livrari_totale": pd.DataFrame()
         }
