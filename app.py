@@ -166,7 +166,7 @@ if st.session_state.role == "angajat":
         
     tab1, tab2, tab3 = st.tabs(["🛒 Lansare Comandă", "🚚 Status & Documente", "📥 Recepție Marfă"])
     
-    # ==========================================
+   # ==========================================
     # TAB 1: LANSARE COMANDĂ
     # ==========================================
     with tab1:
@@ -190,16 +190,16 @@ if st.session_state.role == "angajat":
             
             with st.container():
                 
-                st.markdown("<p class='pas-selectie'>1. Selectează Beneficiarul:</p>", unsafe_allow_html=True)
-                client_ales = st.selectbox("", clients_mock, key="select_client", label_visibility="collapsed")
+                # OBSERVATIA 1: Text aerisit, vizibil, care nu se mai trunchiază
+                st.markdown("<h4 style='color: #d9534f; margin-bottom: 5px;'>1. Selectează Beneficiarul:</h4>", unsafe_allow_html=True)
+                client_ales = st.selectbox("Client", clients_mock, key="select_client", label_visibility="collapsed")
                 
-                # Construim lista de produse DIMAMIC în funcție de client
                 baza_produse = list(st.session_state.db.keys())
                 aliasuri_client_curent = client_aliases.get(client_ales, {})
                 produse_disponibile = baza_produse + list(aliasuri_client_curent.keys())
                 
-                st.markdown("<p class='pas-selectie'>2. Alege Produsul (Căutare rapidă din listă):</p>", unsafe_allow_html=True)
-                selected_option = st.selectbox("", produse_disponibile, on_change=force_reset, key="select_prod", label_visibility="collapsed")
+                st.markdown("<h4 style='color: #d9534f; margin-top: 15px; margin-bottom: 5px;'>2. Alege Produsul (Cautare rapidă):</h4>", unsafe_allow_html=True)
+                selected_option = st.selectbox("Produs", produse_disponibile, on_change=force_reset, key="select_prod", label_visibility="collapsed")
                 
                 if selected_option in aliasuri_client_curent:
                     prod_name = aliasuri_client_curent[selected_option]
@@ -211,14 +211,14 @@ if st.session_state.role == "angajat":
 
                 p_data = st.session_state.db[prod_name]
                 
-                # Codurile verzi, micșorate și aranjate curat
+                # OBSERVATIA 3: Am mutat Cod Produs (NEXUS) pe ultima pozitie!
                 st.markdown(f"""
-                <div style='background-color: #f0f7f4; padding: 10px 15px; border-radius: 6px; border-left: 4px solid #28a745; margin-top: 10px; margin-bottom: 20px;'>
+                <div style='background-color: #f0f7f4; padding: 15px; border-radius: 6px; border-left: 4px solid #28a745; margin-top: 15px; margin-bottom: 20px;'>
                     <div style='display: flex; flex-wrap: wrap; justify-content: space-between;'>
-                        <div><span style='font-size: 0.8rem; color: #555;'>Cod Produs (NEXUS):</span> <span style='color: #28a745; font-weight: bold;'>{p_data['cod_master']}</span></div>
-                        <div><span style='font-size: 0.8rem; color: #555;'>Cod NIR (Fiscal):</span> <span style='color: #28a745; font-weight: bold;'>{p_data['cod_nir']}</span></div>
-                        <div><span style='font-size: 0.8rem; color: #555;'>Cod dB (Palet):</span> <span style='color: #28a745; font-weight: bold;'>{p_data['oracle_pal']}</span></div>
-                        <div><span style='font-size: 0.8rem; color: #555;'>Cod dB (Cutie):</span> <span style='color: #28a745; font-weight: bold;'>{p_data['oracle_box']}</span></div>
+                        <div style='padding-right: 15px;'><span style='font-size: 0.85rem; color: #555;'>Cod NIR (Fiscal):</span> <br><span style='color: #28a745; font-size: 1.1rem; font-weight: bold;'>{p_data['cod_nir']}</span></div>
+                        <div style='padding-right: 15px;'><span style='font-size: 0.85rem; color: #555;'>Cod dB (Palet):</span> <br><span style='color: #28a745; font-size: 1.1rem; font-weight: bold;'>{p_data['oracle_pal']}</span></div>
+                        <div style='padding-right: 15px;'><span style='font-size: 0.85rem; color: #555;'>Cod dB (Cutie):</span> <br><span style='color: #28a745; font-size: 1.1rem; font-weight: bold;'>{p_data['oracle_box']}</span></div>
+                        <div><span style='font-size: 0.85rem; color: #555;'>Cod Produs (NEXUS):</span> <br><span style='color: #6c757d; font-size: 1.1rem; font-weight: bold;'>{p_data['cod_master']}</span></div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -261,31 +261,43 @@ if st.session_state.role == "angajat":
             st.divider()
 
             if len(st.session_state.schita_comanda) > 0:
-                st.markdown(f"#### 🛒 Produse în comanda curentă (Beneficiar: **{client_ales}**)")
+                st.markdown(f"#### 🛒 Produse în comanda curentă (Către: **{client_ales}**)")
                 
-                lista_afisare = []
-                for item in st.session_state.schita_comanda:
+                # OBSERVATIA 4: Cos de cumparaturi interactiv cu butoane de stergere individuala
+                # Construim Header-ul tabelului vizual
+                h1, h2, h3, h4, h5 = st.columns([3, 2, 2, 2, 1])
+                h1.markdown("**Produs**")
+                h2.markdown("**Cod dB (Logistic)**")
+                h3.markdown("**Cantitate Comandată**")
+                h4.markdown("**Total Fiscal**")
+                h5.markdown("**Acțiune**")
+                st.markdown("<hr style='margin-top: 0px; margin-bottom: 10px;'>", unsafe_allow_html=True)
+                
+                # Randurile tabelului (iteram din lista de produse a comenzii)
+                for idx, item in enumerate(st.session_state.schita_comanda):
+                    c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 1])
+                    
                     nume_afisare = item['Produs']
                     if item.get('Alias_Folosit'):
-                        nume_afisare += f" (Ref: {item['Alias_Folosit']})"
+                        nume_afisare += f" <br><span style='color: #e67e22; font-size:0.85rem;'>(Ref: {item['Alias_Folosit']})</span>"
+                    c1.markdown(nume_afisare, unsafe_allow_html=True)
                     
-                    # Calcul total unitati de masura pentru UI informativ
+                    c2.markdown(f"{item['Cod_Depozit_Pal']} / {item['Cod_Depozit_Box']}")
+                    c3.markdown(f"**{item['Paleti']}** Pal | **{item['Cutii']}** Cut")
+                    
                     total_cutii = (item['Paleti'] * st.session_state.db[item['Produs']]['conversion']) + item['Cutii']
-                    total_um = total_cutii * item['Conversie_Baza']
-
-                    lista_afisare.append({
-                        "Cod dB (Logistic)": f"{item['Cod_Depozit_Pal']} / {item['Cod_Depozit_Box']}",
-                        "Produs": nume_afisare,
-                        "Paleți Întregi": str(item['Paleti']),
-                        "Cutii Fracție": str(item['Cutii']),
-                        "Total Fiscal (U.M.)": f"{total_um} {item['UM_Baza']}"
-                    })
+                    c4.markdown(f"**{total_cutii * item['Conversie_Baza']}** {item['UM_Baza']}")
+                    
+                    if c5.button("❌", key=f"del_row_{idx}", help="Șterge acest produs"):
+                        st.session_state.schita_comanda.pop(idx)
+                        st.rerun()
                 
-                st.dataframe(pd.DataFrame(lista_afisare), use_container_width=True, hide_index=True)
+                st.markdown("<hr style='margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
                 
+                # Butoanele de la finalul cosului
                 col_btn1, col_btn2 = st.columns([1, 3])
                 with col_btn1:
-                    if st.button("🗑️ Golește Lista"):
+                    if st.button("🗑️ Golește toată Lista"):
                         st.session_state.schita_comanda = []
                         st.rerun()
                 with col_btn2:
@@ -295,6 +307,8 @@ if st.session_state.role == "angajat":
                         st.rerun()
             else:
                 st.info("Schița este goală. Adăugați produse pentru a forma o comandă.")
+
+        # --- ECRAN B: PREVIZUALIZARE & SALVARE PAYLOAD-URI SCINDATE ---
 
         # --- ECRAN B: PREVIZUALIZARE & SALVARE PAYLOAD-URI SCINDATE ---
         else:
