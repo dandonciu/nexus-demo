@@ -62,8 +62,8 @@ if 'mod_previzualizare' not in st.session_state:
 if 'istoric_comenzi_live' not in st.session_state:
     st.session_state.istoric_comenzi_live = []
 
-if 'db' in st.session_state:
-    del st.session_state['db']
+def force_reset():
+    st.session_state.reset_counter += 1
 
 if 'db' not in st.session_state:
     st.session_state.db = {
