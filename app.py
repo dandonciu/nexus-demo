@@ -187,7 +187,7 @@ if st.session_state.role == "angajat":
         comenzi_pending = [cmd for cmd in st.session_state.istoric_comenzi_live if cmd.get('status_incarcat', False) and not cmd.get('document_emis', False)]
         
         if len(comenzi_pending) > 0:
-            ora_alertei = datetime.now(pytz.timezone('Europe/Bucharest')).strftime("%H:%M")
+            ora_alertei = datetime.now(ZoneInfo('Europe/Bucharest')).strftime("%H:%M")
             st.markdown(f"""
             <div style='background-color: #fff3f3; border-left: 5px solid #dc3545; padding: 15px; margin-bottom: 20px; border-radius: 4px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>
                 <div style='font-size: 2.2rem; margin-right: 15px;'>🚨</div>
