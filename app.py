@@ -175,8 +175,8 @@ if st.session_state.role == "angajat":
     with col_titlu:
         st.title("⚡ NEXUS Operațional")
     with col_cmd:
-       ora_alertei = datetime.now(ZoneInfo('Europe/Bucharest')).strftime("%H:%M")
-       st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
+        data_azi = datetime.now(ZoneInfo('Europe/Bucharest')).strftime("%d.%m.%Y")
+        st.info(f"**Nr. Cmd:** {st.session_state.order_number}  \n**Data:** {data_azi}")
         
     tab1, tab2, tab3 = st.tabs(["🛒 Lansare Comandă", "🚚 Status & Documente", "📥 Recepție Marfă"])
     
