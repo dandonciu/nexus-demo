@@ -194,11 +194,17 @@ with tab1:
         client = st.selectbox("Client", list(clients_data.keys()))
         produse = list(st.session_state.db.keys()) + list(client_aliases.get(client, {}).keys())
         prod_sel = st.selectbox("Produs", produse, on_change=lambda: st.session_state.update({"reset_counter": st.session_state.reset_counter + 1}))
-        
+
         real_prod = client_aliases.get(client, {}).get(prod_sel, prod_sel)
         p_data = st.session_state.db[real_prod]
         
+        # --- PARTEA LIPSĂ: AFIȘAREA STOCULUI ---
+        pal_disp, cut_disp = get_available_stock_ui(real_prod)
+        st.success(f"📦 STOC DISPONIBIL: **{pal_disp}** Paleți | **{cut_disp}** Cutii/Baxuri")
+        # ----------------------------------------
+        
         c1, c2 = st.columns(2)
+
         p_in = c1.number_input("Paleți întregi:", min_value=0, key=f"p_{st.session_state.reset_counter}")
         b_in = c2.number_input("Bax/Cutii (Fracție):", min_value=0, key=f"b_{st.session_state.reset_counter}")
         
