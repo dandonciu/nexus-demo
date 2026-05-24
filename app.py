@@ -10,9 +10,8 @@ from fpdf import FPDF
 # --- INITIALIZARE FOLDERE EXPORT ---
 EXPORT_DIR = "exports"
 PDF_DIR = os.path.join(EXPORT_DIR, "pdf_docs")
-DEPOZIT_DIR = os.path.join(EXPORT_DIR, "depozit_payloads")
 
-for folder in [EXPORT_DIR, PDF_DIR, DEPOZIT_DIR]:
+for folder in [EXPORT_DIR, PDF_DIR]:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
@@ -77,16 +76,18 @@ def get_available_stock_ui(prod_key):
     return rem // st.session_state.db[prod_key]['conversion'], rem % st.session_state.db[prod_key]['conversion']
 
 def calculate_delta(prod_key, cmd_pal, cmd_box):
-    return ((cmd_pal * st.session_state.db[prod_key]['conversion']) + cmd_box + 
-            sum([(i['Paleti'] * st.session_state.db[prod_key]['conversion']) + i['Cutii'] for i in st.session_state.schita_comanda if i['Produs'] == prod_key])) <= get_total_boxes(prod_key)
+    total_dorit = (cmd_pal * st.session_state.db[prod_key]['conversion']) + cmd_box
+    deja_in_cos = sum([(i['Paleti'] * st.session_state.db[prod_key]['conversion']) + i['Cutii'] for i in st.session_state.schita_comanda if i['Produs'] == prod_key])
+    return (total_dorit + deja_in_cos) <= get_total_boxes(prod_key)
+
 
 # ================= MOTOR GENERARE MULTI-PAGE PDF =================
-def generate_pdf_document(order_no, client_name, payload_fiscal):
+def generate_pdf_document(order_no, client_name, payload_fiscal, payload_log):
     pdf = FPDF()
     c_data = clients_data[client_name]
     f_data = furnizor_data
     
-    # === PAGINA 1: AVIZ DE INSOTIRE ===
+    # === PAGINA 1: AVIZ DE INSOTIRE (FISCAL) ===
     pdf.add_page()
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(90, 5, clean_text(f"FURNIZOR: {f_data['Nume']}"), ln=0); pdf.cell(10, 5, "", ln=0); pdf.cell(90, 5, clean_text(f"CUMPARATOR: {client_name}"), ln=1)
@@ -102,12 +103,8 @@ def generate_pdf_document(order_no, client_name, payload_fiscal):
     pdf.ln(5)
     
     pdf.set_font("Arial", 'B', 8)
-    pdf.cell(8, 8, "Nr", 1, 0, 'C')
-    pdf.cell(25, 8, "Cod Depozit", 1, 0, 'C')
-    pdf.cell(25, 8, "Cod NIR", 1, 0, 'C')
-    pdf.cell(85, 8, "Specificatia (Denumire)", 1, 0, 'C')
-    pdf.cell(15, 8, "U.M.", 1, 0, 'C')
-    pdf.cell(30, 8, "Cantitate", 1, 1, 'C')
+    pdf.cell(8, 8, "Nr", 1, 0, 'C'); pdf.cell(25, 8, "Cod Depozit", 1, 0, 'C'); pdf.cell(25, 8, "Cod NIR", 1, 0, 'C')
+    pdf.cell(85, 8, "Specificatia (Denumire)", 1, 0, 'C'); pdf.cell(15, 8, "U.M.", 1, 0, 'C'); pdf.cell(30, 8, "Cantitate", 1, 1, 'C')
     
     pdf.set_font("Arial", '', 8)
     for i, item in enumerate(payload_fiscal):
@@ -125,13 +122,14 @@ def generate_pdf_document(order_no, client_name, payload_fiscal):
     pdf.ln(20)
     pdf.cell(0, 5, "Semnatura si stampila furnizorului .........................       Semnatura de primire .........................", ln=1)
     
-    # === PAGINA 2: DISPOZITIE DE LIVRARE (COMANDA DEPOZIT) ===
+    # === PAGINA 2: DISPOZITIE DE LIVRARE (LOGISTIC/DEPOZIT) ===
+    # ACUM IUBESTE OPTIMIZAREA: Afiseaza Paleti si Cutii pe randuri separate!
     pdf.add_page()
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(0, 5, clean_text(f"Furnizor: {f_data['Nume']}"), ln=1)
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 8, "DISPOZITIE DE LIVRARE", align='C', ln=1)
+    pdf.cell(0, 8, "DISPOZITIE DE LIVRARE (COMANDA DEPOZIT)", align='C', ln=1)
     pdf.set_font("Arial", '', 10)
     pdf.cell(0, 5, f"Nr. {order_no} / Data: {datetime.now().strftime('%d.%m.%Y')}", align='C', ln=1)
     pdf.ln(5)
@@ -148,13 +146,13 @@ def generate_pdf_document(order_no, client_name, payload_fiscal):
     pdf.cell(23, 8, "Cant. Livrata", 1, 1, 'C')
     
     pdf.set_font("Arial", '', 8)
-    for i, item in enumerate(payload_fiscal):
+    for i, item in enumerate(payload_log):
         pdf.cell(8, 7, str(i+1), 1, 0, 'C')
-        pdf.cell(22, 7, str(item.get('Cod_Depozit', '-')), 1, 0, 'C')
+        pdf.cell(22, 7, str(item.get('Cod Gestiune', '-')), 1, 0, 'C')
         pdf.cell(22, 7, str(item.get('Cod SB (NIR)', '-')), 1, 0, 'C')
-        pdf.cell(78, 7, clean_text(item['Nomenclator Oficial'][:45]), 1, 0)
-        pdf.cell(15, 7, item['Cantitate (U.M.)'].split(' ')[1], 1, 0, 'C')
-        pdf.cell(22, 7, item['Cantitate (U.M.)'].split(' ')[0], 1, 0, 'C')
+        pdf.cell(78, 7, clean_text(item['Denumire'][:45]), 1, 0)
+        pdf.cell(15, 7, item['UM'], 1, 0, 'C')
+        pdf.cell(22, 7, item['Cant'], 1, 0, 'C')
         pdf.cell(23, 7, "", 1, 1, 'C')
         
     for _ in range(4):
@@ -164,7 +162,7 @@ def generate_pdf_document(order_no, client_name, payload_fiscal):
     pdf.ln(15)
     pdf.cell(0, 5, "Dispus livrarea ....................      Gestionar ....................      Primitor ....................", ln=1)
 
-    # === PAGINA 3: DECLARATIE DE CONFORMITATE ===
+    # === PAGINA 3: DECLARATIE ===
     pdf.add_page()
     pdf.set_font("Arial", 'B', 12); pdf.cell(0, 6, clean_text(f"{f_data['Nume']}"), ln=1)
     pdf.set_font("Arial", '', 10); pdf.cell(0, 5, clean_text(f"Adresa: {f_data['Adresa']}"), ln=1); pdf.cell(0, 5, f"RC: {f_data['RegCom']} | CUI: {f_data['CIF']}", ln=1)
@@ -240,21 +238,29 @@ with tab1:
     else:
         st.markdown("### 🔍 Confirmare Scindare: Ce merge la Depozit vs. Ce merge la Facturare")
         payload_log, payload_fisc = [], []
+        
         for itm in st.session_state.schita_comanda:
             nume = itm['Produs']
-            P, C, pal = st.session_state.db[nume]['conversion'], itm['Cutii'], itm['Paleti']
+            P = st.session_state.db[nume]['conversion']
             
-            if pal > 0: payload_log.append({"Cod Gestiune": itm['Cod_Depozit'], "Cant": str(pal), "UM": "Palet"})
-            if C > 0: payload_log.append({"Cod Gestiune": itm['Cod_Depozit'], "Cant": str(C), "UM": "Bax/Cutie"})
+            # MAGIA MATEMATICA: AUTO-CONVERSIE ABSOLUTA (Rezolvarea celor "65 cutii")
+            total_baxuri_comandate = (itm['Paleti'] * P) + itm['Cutii']
+            paleti_optimizati = total_baxuri_comandate // P
+            baxuri_optimizate = total_baxuri_comandate % P
             
-            tb = ((pal * P) + C) * itm['Conversie_Baza']
+            if paleti_optimizati > 0: 
+                payload_log.append({"Cod Gestiune": itm['Cod_Depozit'], "Cod SB (NIR)": itm['Cod_NIR'], "Denumire": nume, "Cant": str(paleti_optimizati), "UM": "Palet"})
+            if baxuri_optimizate > 0: 
+                payload_log.append({"Cod Gestiune": itm['Cod_Depozit'], "Cod SB (NIR)": itm['Cod_NIR'], "Denumire": nume, "Cant": str(baxuri_optimizate), "UM": "Bax/Cutie"})
+            
+            tb_fiscal = total_baxuri_comandate * itm['Conversie_Baza']
             payload_fisc.append({
                 "Cod_Depozit": itm['Cod_Depozit'], "Cod SB (NIR)": itm['Cod_NIR'], 
-                "Nomenclator Oficial": nume, "Cantitate (U.M.)": f"{tb} {itm['UM_Baza']}"
+                "Nomenclator Oficial": nume, "Cantitate (U.M.)": f"{tb_fiscal} {itm['UM_Baza']}"
             })
 
         col1, col2 = st.columns(2)
-        with col1: st.warning("🚚 **Către Stivuitorist (Logistică)**"); st.dataframe(pd.DataFrame(payload_log))
+        with col1: st.warning("🚚 **Către Stivuitorist (Logistică)**"); st.dataframe(pd.DataFrame(payload_log)[['Cod Gestiune', 'Cant', 'UM']])
         with col2: st.success("🧾 **Către SmartBill (Fiscal)**"); st.dataframe(pd.DataFrame(payload_fisc))
 
         col_b1, col_b2 = st.columns(2)
@@ -264,7 +270,7 @@ with tab1:
             if st.button("🚀 CONFIRMĂ ȘI LANSEAZĂ LA RAMPĂ", type="primary"):
                 st.session_state.istoric_comenzi_live.append({
                     "Comanda": st.session_state.order_number, "Client": st.session_state.client_temporar_comandat,
-                    "Payload_Fiscal": payload_fisc, "Status": "Asteapta Incarcare"
+                    "Payload_Logistic": payload_log, "Payload_Fiscal": payload_fisc, "Status": "Asteapta Incarcare"
                 })
                 st.session_state.order_number += 1
                 st.session_state.schita_comanda.clear()
@@ -286,7 +292,7 @@ with tab2:
                 
         elif cmd['Status'] == "Incarcat":
             if st.button("🖨️ EMITE SET ACTE (Aviz + Disp + Decl)", type="primary", key=f"emit_{idx}"):
-                pdf_p = generate_pdf_document(cmd['Comanda'], cmd['Client'], cmd['Payload_Fiscal'])
+                pdf_p = generate_pdf_document(cmd['Comanda'], cmd['Client'], cmd['Payload_Fiscal'], cmd['Payload_Logistic'])
                 st.session_state.istoric_comenzi_live[idx]['Status'] = "Documente Generate"
                 st.session_state.istoric_comenzi_live[idx]['pdf_path'] = pdf_p
                 st.rerun()
