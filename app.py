@@ -63,6 +63,11 @@ if 'schita_comanda' not in st.session_state: st.session_state.schita_comanda = [
 if 'mod_previzualizare' not in st.session_state: st.session_state.mod_previzualizare = False
 if 'istoric_comenzi_live' not in st.session_state: st.session_state.istoric_comenzi_live = []
 
+def clean_text(txt):
+    replacements = {'ă':'a', 'â':'a', 'î':'i', 'ș':'s', 'ț':'t', 'Ă':'A', 'Â':'A', 'Î':'I', 'Ș':'S', 'Ț':'T'}
+    for k, v in replacements.items(): txt = str(txt).replace(k, v)
+    return txt
+
 def get_total_boxes(prod_key):
     p = st.session_state.db[prod_key]
     return (p['stock_pal'] * p['conversion']) + p['stock_box']
@@ -78,10 +83,6 @@ def calculate_delta(prod_key, cmd_pal, cmd_box):
     return ((cmd_pal * st.session_state.db[prod_key]['conversion']) + cmd_box + 
             sum([(i['Paleti'] * st.session_state.db[prod_key]['conversion']) + i['Cutii'] for i in st.session_state.schita_comanda if i['Produs'] == prod_key])) <= get_total_boxes(prod_key)
 
-def clean_text(txt):
-    replacements = {'ă':'a', 'â':'a', 'î':'i', 'ș':'s', 'ț':'t', 'Ă':'A', 'Â':'A', 'Î':'I', 'Ș':'S', 'Ț':'T'}
-    for k, v in replacements.items(): txt = str(txt).replace(k, v)
-    return txt
 
 # ================= MOTOR GENERARE MULTI-PAGE PDF =================
 def generate_pdf_document(order_no, client_name, payload_fiscal):
@@ -104,7 +105,7 @@ def generate_pdf_document(order_no, client_name, payload_fiscal):
     pdf.cell(0, 5, f"Seria NEXUS Nr. {order_no} | Data: {datetime.now().strftime('%d.%m.%Y')}", align='C', ln=1)
     pdf.ln(5)
     
-    # Tabel Aviz (Cu WMS si NIR)
+    # Tabel Aviz
     pdf.set_font("Arial", 'B', 8)
     pdf.cell(8, 8, "Nr", 1, 0, 'C')
     pdf.cell(25, 8, "Cod WMS", 1, 0, 'C')
@@ -153,7 +154,7 @@ def generate_pdf_document(order_no, client_name, payload_fiscal):
         pdf.cell(100, 7, clean_text(item['Nomenclator Oficial'][:50]), 1, 0)
         pdf.cell(20, 7, item['Cantitate (U.M.)'].split(' ')[1], 1, 0, 'C')
         pdf.cell(30, 7, item['Cantitate (U.M.)'].split(' ')[0], 1, 0, 'C')
-        pdf.cell(30, 7, "", 1, 1, 'C') # Spatiu pt completare manuala WMS
+        pdf.cell(30, 7, "", 1, 1, 'C') # Spatiu completare manuala
         
     pdf.ln(15)
     pdf.cell(0, 5, "Dispus livrarea ....................      Gestionar ....................      Primitor ....................", ln=1)
@@ -209,28 +210,31 @@ with tab1:
         client = st.selectbox("Client", list(clients_data.keys()))
         produse = list(st.session_state.db.keys()) + list(client_aliases.get(client, {}).keys())
         prod_sel = st.selectbox("Produs", produse, on_change=lambda: st.session_state.update({"reset_counter": st.session_state.reset_counter + 1}))
-
+        
         real_prod = client_aliases.get(client, {}).get(prod_sel, prod_sel)
         p_data = st.session_state.db[real_prod]
         
-        # --- PARTEA LIPSĂ: AFIȘAREA STOCULUI ---
+        # --- AICI SUNT CUTIILE SI CONVERSIA ---
         pal_disp, cut_disp = get_available_stock_ui(real_prod)
-        st.success(f"📦 STOC DISPONIBIL: **{pal_disp}** Paleți | **{cut_disp}** Cutii/Baxuri")
-        # ----------------------------------------
+        st.success(f"📦 STOC DISPONIBIL: **{pal_disp}** Paleți | **{cut_disp}** Cutii/Baxuri libere")
+        st.info(f"🔄 Conversie WMS: **{p_data['conversion']}** bax/palet | ⚖️ Conversie Fiscală: **{p_data['conversie_baza']}** {p_data['um_baza']}/bax")
         
         c1, c2 = st.columns(2)
-
         p_in = c1.number_input("Paleți întregi:", min_value=0, key=f"p_{st.session_state.reset_counter}")
         b_in = c2.number_input("Bax/Cutii (Fracție):", min_value=0, key=f"b_{st.session_state.reset_counter}")
         
         if st.button("➕ Adaugă in Cărucior"):
-            if p_in > 0 or b_in > 0:
+            if p_in == 0 and b_in == 0:
+                st.warning("Introdu o cantitate.")
+            elif calculate_delta(real_prod, p_in, b_in):
                 st.session_state.schita_comanda.append({
                     "Produs": real_prod, "Cod_NIR": p_data['cod_nir'], "Cod_Depozit": p_data['oracle_box'],
                     "Paleti": p_in, "Cutii": b_in, "UM_Baza": p_data['um_baza'], "Conversie_Baza": p_data['conversie_baza']
                 })
                 st.session_state.reset_counter += 1
                 st.rerun()
+            else:
+                st.error("❌ Stoc insuficient!")
                 
         if len(st.session_state.schita_comanda) > 0:
             st.write(st.session_state.schita_comanda)
@@ -257,7 +261,7 @@ with tab1:
                 "Payload_Fiscal": payload_fisc, "Status": "Asteapta Incarcare"
             })
             st.session_state.order_number += 1
-            st.session_state.schita_comanda.clear() # BARIERA PT ZERO QUANTITY BUG
+            st.session_state.schita_comanda.clear() # BARIERA ZERO QUANTITY
             st.session_state.mod_previzualizare = False
             st.rerun()
 
