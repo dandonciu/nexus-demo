@@ -1,6 +1,7 @@
 import streamlit as st
 from backend.services.order_orchestrator import render_lansare_module
 from backend.database.clients_config import init_db
+from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
 
 # Setări Pagină Enterprise (Rămâne mereu prima linie)
 st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
@@ -114,9 +115,8 @@ elif st.session_state.current_module == 'Lansare':
 
 elif st.session_state.current_module == 'Manager':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("📊 Aici vom introduce Modulul Manager Dashboard")
-    # AICI VOM IMPORTA kpi_dashboard.py
-
+    render_manager_dashboard()
+    
 elif st.session_state.current_module == 'Email':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     st.title("📨 Căsuța de Turtă Dulce")
