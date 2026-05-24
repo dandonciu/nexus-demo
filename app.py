@@ -1,4 +1,5 @@
 import streamlit as st
+from backend.services.order_orchestrator import render_lansare_module
 from backend.database.clients_config import init_db
 
 # Setări Pagină Enterprise (Rămâne mereu prima linie)
@@ -109,8 +110,7 @@ if st.session_state.current_module == 'Home':
 # ==========================================
 elif st.session_state.current_module == 'Lansare':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("📦 Aici vom introduce Modulul Lansare (Cu tabelul superb)")
-    # AICI VOM IMPORTA order_orchestrator.py in pasul urmator!
+    render_lansare_module()
 
 elif st.session_state.current_module == 'Manager':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
