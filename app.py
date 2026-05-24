@@ -63,6 +63,21 @@ if 'schita_comanda' not in st.session_state: st.session_state.schita_comanda = [
 if 'mod_previzualizare' not in st.session_state: st.session_state.mod_previzualizare = False
 if 'istoric_comenzi_live' not in st.session_state: st.session_state.istoric_comenzi_live = []
 
+def get_total_boxes(prod_key):
+    p = st.session_state.db[prod_key]
+    return (p['stock_pal'] * p['conversion']) + p['stock_box']
+
+def get_available_stock_ui(prod_key):
+    total_db = get_total_boxes(prod_key)
+    in_cart = sum([(item.get('Paleti', 0) * st.session_state.db[prod_key]['conversion']) + item.get('Cutii', 0) 
+                   for item in st.session_state.schita_comanda if item.get('Produs') == prod_key])
+    rem = total_db - in_cart
+    return rem // st.session_state.db[prod_key]['conversion'], rem % st.session_state.db[prod_key]['conversion']
+
+def calculate_delta(prod_key, cmd_pal, cmd_box):
+    return ((cmd_pal * st.session_state.db[prod_key]['conversion']) + cmd_box + 
+            sum([(i['Paleti'] * st.session_state.db[prod_key]['conversion']) + i['Cutii'] for i in st.session_state.schita_comanda if i['Produs'] == prod_key])) <= get_total_boxes(prod_key)
+
 def clean_text(txt):
     replacements = {'ă':'a', 'â':'a', 'î':'i', 'ș':'s', 'ț':'t', 'Ă':'A', 'Â':'A', 'Î':'I', 'Ș':'S', 'Ț':'T'}
     for k, v in replacements.items(): txt = str(txt).replace(k, v)
