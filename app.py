@@ -2,7 +2,7 @@ import streamlit as st
 from backend.database.clients_config import init_db
 from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
 from backend.incoming_orders.email_parser import render_email_parser_module
-from backend.services.order_orchestrator import render_lansare_module (momentan comentat până rezolvăm bug-ul mâine)
+from backend.services.order_orchestrator import render_lansare_module
 
 st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
 
