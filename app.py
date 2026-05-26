@@ -2,7 +2,7 @@ import streamlit as st
 from backend.database.clients_config import init_db
 from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
 from backend.incoming_orders.email_parser import render_email_parser_module
-# from backend.services.order_orchestrator import render_lansare_module (momentan comentat până rezolvăm bug-ul mâine)
+from backend.services.order_orchestrator import render_lansare_module (momentan comentat până rezolvăm bug-ul mâine)
 
 st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
 
@@ -32,7 +32,7 @@ if not st.session_state.logged_in:
         with st.form("login_form"):
             pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
             if st.form_submit_button("Autentificare", use_container_width=True):
-                if pwd in ["angajat-no", "manager-no"]:
+                if pwd in ["angajat", "manager"]:
                     st.session_state.logged_in = True; st.session_state.role = pwd; st.rerun()
                 else: st.error("Acces Respins!")
     st.stop()
@@ -117,7 +117,7 @@ if st.session_state.current_module == 'Home':
 # ==========================================
 elif st.session_state.current_module == 'Lansare':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.warning("Aici chemăm order_orchestrator.py după ce reglăm WMS-ul și PDF-ul SmartBill.")
+    render_lansare_module()
 
 elif st.session_state.current_module == 'Manager':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
