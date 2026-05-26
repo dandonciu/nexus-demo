@@ -4,17 +4,21 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import os
 import base64
+import tempfile
 from fpdf import FPDF
 
 # Importăm datele din DB-ul nostru
 from backend.database.clients_config import clients_data, furnizor_data, client_aliases
 
-import tempfile
-# Setări foldere PDF (Compatibil cu Streamlit Cloud)
+# Setări foldere PDF (Compatibil cu Cloud)
 PDF_DIR = tempfile.gettempdir()
 
 # --- FUNCTII UTILE ---
 def force_reset(): st.session_state.reset_counter += 1
+
+def reset_cart():
+    st.session_state.schita_comanda = []
+    force_reset()
 
 def clean_text(txt):
     replacements = {'ă':'a', 'â':'a', 'î':'i', 'ș':'s', 'ț':'t', 'Ă':'A', 'Â':'A', 'Î':'I', 'Ș':'S', 'Ț':'T'}
@@ -39,7 +43,7 @@ def calculate_delta(prod_key, cmd_pal, cmd_box):
     return (total_dorit + deja_in_cos) <= get_total_boxes(prod_key)
 
 # ==========================================
-# --- MOTOR PDF (FĂRĂ PREȚURI, LEGAL 100%) ---
+# --- MOTOR PDF ---
 # ==========================================
 def generate_pdf_document(order_no, client_name, payload_fiscal, payload_log):
     pdf = FPDF()
@@ -47,9 +51,7 @@ def generate_pdf_document(order_no, client_name, payload_fiscal, payload_log):
     f_data = furnizor_data
     data_azi = datetime.now().strftime('%d/%m/%Y')
     
-    # ---------------------------------------------------------
-    # PAGINA 1: AVIZ DE INSOTIRE (FĂRĂ VALORI FINANCIARE)
-    # ---------------------------------------------------------
+    # PAGINA 1: AVIZ 
     pdf.add_page()
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 8, "AVIZ DE INSOTIRE A MARFII", align='C', ln=1)
@@ -57,109 +59,91 @@ def generate_pdf_document(order_no, client_name, payload_fiscal, payload_log):
     pdf.cell(0, 5, f"Seria NS nr. {order_no} | Data: {data_azi}", align='C', ln=1)
     pdf.ln(5)
     
-    # Date Furnizor & Client
+    # Date Furnizor (Stânga) & Client (Dreapta, aliniat)
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(95, 5, clean_text(f"Furnizor: {f_data['Nume']}"), ln=0); pdf.cell(95, 5, clean_text(f"Client: {client_name}"), ln=1)
+    pdf.cell(95, 5, clean_text(f"Furnizor: {f_data['Nume']}"), ln=0)
+    pdf.set_x(110); pdf.cell(85, 5, clean_text(f"Client: {client_name}"), ln=1)
+    
     pdf.set_font("Arial", '', 8)
-    pdf.cell(95, 4, f"CIF: {f_data['CIF']} | J: {f_data['RegCom']}", ln=0); pdf.cell(95, 4, f"CIF: {c_data['CIF']} | J: {c_data['RegCom']}", ln=1)
-    pdf.cell(95, 4, clean_text(f"Adresa: {f_data['Adresa']}"), ln=0); pdf.cell(95, 4, clean_text(f"Adresa: {c_data['Adresa']}"), ln=1)
+    pdf.cell(95, 4, f"CIF: {f_data['CIF']} | J: {f_data['RegCom']}", ln=0)
+    pdf.set_x(110); pdf.cell(85, 4, f"CIF: {c_data['CIF']} | J: {c_data['RegCom']}", ln=1)
+    
+    pdf.cell(95, 4, clean_text(f"Adresa: {f_data['Adresa']}"), ln=0)
+    pdf.set_x(110); pdf.multi_cell(85, 4, clean_text(f"Adresa: {c_data['Adresa']}"))
     pdf.ln(5)
     
-    # Tabel Nou - Doar Cantitativ (Lățime totală 190)
+    # Tabel cu PREȚ
     pdf.set_font("Arial", 'B', 8)
-    pdf.cell(10, 8, "Nr.", 1, 0, 'C')
-    pdf.cell(130, 8, "Denumirea produselor", 1, 0, 'C')
-    pdf.cell(20, 8, "U.M.", 1, 0, 'C')
-    pdf.cell(30, 8, "Cantitate", 1, 1, 'C')
+    pdf.cell(10, 8, "Nr.", 1, 0, 'C'); pdf.cell(110, 8, "Denumirea produselor", 1, 0, 'C')
+    pdf.cell(20, 8, "U.M.", 1, 0, 'C'); pdf.cell(25, 8, "Cantitate", 1, 0, 'C'); pdf.cell(25, 8, "Pret Unitar", 1, 1, 'C')
     
     pdf.set_font("Arial", '', 8)
     for i, item in enumerate(payload_fiscal):
         cantitate_neta = float(item['Cantitate (U.M.)'].split(' ')[0])
-        cod_nc = "48236990" 
+        cod_nc = "48236990"
+        pret_mock = "12.50" 
         
-        # Rândul 1 (Denumire Produs)
         pdf.cell(10, 5, str(i+1), 'L,T,R', 0, 'C')
-        pdf.cell(130, 5, clean_text(f"({item.get('Cod_Depozit', '-')}) {item['Nomenclator Oficial'][:75]}"), 'L,T,R', 0, 'L')
+        pdf.cell(110, 5, clean_text(f"({item.get('Cod_Depozit', '-')}) {item['Nomenclator Oficial'][:65]}"), 'L,T,R', 0, 'L')
         pdf.cell(20, 5, clean_text(item['Cantitate (U.M.)'].split(' ')[1]), 'L,T,R', 0, 'C')
-        pdf.cell(30, 5, str(cantitate_neta), 'L,T,R', 1, 'C')
+        pdf.cell(25, 5, str(cantitate_neta), 'L,T,R', 0, 'C')
+        pdf.cell(25, 5, pret_mock, 'L,T,R', 1, 'C')
         
-        # Rândul 2 (Cod NC)
         pdf.cell(10, 4, "", 'L,B,R', 0, 'C')
-        pdf.set_text_color(100, 100, 100) # Gri
-        pdf.cell(130, 4, f"Cod NC: {cod_nc}", 'L,B,R', 0, 'L')
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(110, 4, f"Cod NC: {cod_nc}", 'L,B,R', 0, 'L')
         pdf.set_text_color(0, 0, 0)
-        pdf.cell(20, 4, "", 'L,B,R', 0, 'C')
-        pdf.cell(30, 4, "", 'L,B,R', 1, 'C')
+        pdf.cell(20, 4, "", 'L,B,R', 0, 'C'); pdf.cell(25, 4, "", 'L,B,R', 0, 'C'); pdf.cell(25, 4, "", 'L,B,R', 1, 'C')
 
-    # Rânduri goale
     for _ in range(2):
-        pdf.cell(10, 6, "", 1, 0); pdf.cell(130, 6, "", 1, 0); pdf.cell(20, 6, "", 1, 0); pdf.cell(30, 6, "", 1, 1)
+        pdf.cell(10, 6, "", 1, 0); pdf.cell(110, 6, "", 1, 0); pdf.cell(20, 6, "", 1, 0); pdf.cell(25, 6, "", 1, 0); pdf.cell(25, 6, "", 1, 1)
 
-    # Sub-Tabel (Comanda Achiziție)
     pdf.set_font("Arial", 'B', 8)
     pdf.cell(190, 6, f"Nr. comanda achizitie: AR {order_no}/{data_azi.split('/')[2]}", 'L,T,R', 1, 'L')
     pdf.set_font("Arial", '', 8)
     pdf.cell(190, 6, f"AR {order_no} (Comanda {client_name})", 'L,B,R', 1, 'L')
     
-    # Subsol (Date de expediție conform Legii)
     pdf.ln(5)
-    pdf.set_font("Arial", '', 8)
     pdf.cell(95, 5, "Semnatura si stampila furnizorului:", 'L,T,R', 0, 'L')
     pdf.cell(95, 5, "Date privind expeditia:", 'L,T,R', 1, 'L')
-    
     pdf.cell(95, 5, "", 'L,R', 0, 'L')
     pdf.cell(95, 5, "Numele delegatului: .....................................................", 'L,R', 1, 'L')
     
-    pdf.cell(95, 5, "", 'L,R', 0, 'L')
-    pdf.cell(95, 5, "B.I./C.I. seria: ....... nr. ............................", 'L,R', 1, 'L')
-    
+    # "Intocmit de" scris mărunt
+    pdf.set_font("Arial", '', 6)
     pdf.cell(95, 5, "Intocmit de: NEXUS Auto-Sistem", 'L,R', 0, 'L')
+    pdf.set_font("Arial", '', 8)
     pdf.cell(95, 5, "Mijloc de transport: ................................. nr: ..................", 'L,R', 1, 'L')
     
     pdf.cell(95, 5, "", 'L,B,R', 0, 'L')
     pdf.cell(95, 5, f"Expedierea s-a facut in prezenta noastra la data: {data_azi}", 'L,B,R', 1, 'L')
 
-    # ---------------------------------------------------------
-    # PAGINA 2: DISPOZITIE DEPOZIT (WMS CLAR)
-    # ---------------------------------------------------------
+    # PAGINA 2: DISPOZITIE DEPOZIT
     pdf.add_page()
     pdf.set_font("Arial", 'B', 12); pdf.cell(0, 8, "DISPOZITIE DE LIVRARE (COMANDA DEPOZIT)", align='C', ln=1)
     pdf.set_font("Arial", '', 10); pdf.cell(0, 5, f"Nr. {order_no} / Data: {data_azi}", align='C', ln=1); pdf.ln(10)
     
     pdf.set_font("Arial", 'B', 9)
-    pdf.cell(15, 8, "Nr", 1, 0, 'C'); pdf.cell(40, 8, "Cod Gestiune (Raft)", 1, 0, 'C')
-    pdf.cell(85, 8, "Denumirea Produsului", 1, 0, 'C'); pdf.cell(25, 8, "Cantitate", 1, 0, 'C'); pdf.cell(25, 8, "Tip (U/M)", 1, 1, 'C')
+    pdf.cell(15, 8, "Nr", 1, 0, 'C'); pdf.cell(40, 8, "Cod Gestiune", 1, 0, 'C')
+    pdf.cell(85, 8, "Denumire / Instructiune Stivuitorist", 1, 0, 'C'); pdf.cell(25, 8, "Cantitate", 1, 0, 'C'); pdf.cell(25, 8, "U/M", 1, 1, 'C')
     
     pdf.set_font("Arial", '', 9)
     for i, item in enumerate(payload_log):
         is_palet = "PAL" in item['UM'].upper()
         pdf.cell(15, 8, str(i+1), 1, 0, 'C')
-        if is_palet:
-            pdf.set_font("Arial", 'B', 9); pdf.cell(40, 8, str(item.get('Cod Gestiune', '-')), 1, 0, 'C'); pdf.set_font("Arial", '', 9)
-        else:
-            pdf.cell(40, 8, str(item.get('Cod Gestiune', '-')), 1, 0, 'C')
-            
-        pdf.cell(85, 8, clean_text(item['Denumire'][:50]), 1, 0)
+        pdf.set_font("Arial", 'B' if is_palet else '', 9)
+        pdf.cell(40, 8, str(item.get('Cod Gestiune', '-')), 1, 0, 'C')
+        pdf.set_font("Arial", '', 9)    
+        pdf.cell(85, 8, clean_text(item['Denumire'][:60]), 1, 0)
         pdf.cell(25, 8, str(item['Cant']), 1, 0, 'C')
+        
         if is_palet:
-            pdf.set_fill_color(220, 220, 220); pdf.cell(25, 8, "PALET", 1, 1, 'C', fill=True)
+            pdf.set_fill_color(220, 220, 220); pdf.cell(25, 8, item['UM'], 1, 1, 'C', fill=True)
         else:
-            pdf.cell(25, 8, "CUTIE/BAX", 1, 1, 'C')
+            pdf.cell(25, 8, item['UM'], 1, 1, 'C')
 
     pdf.ln(20)
     pdf.cell(0, 5, "Dispus livrarea ....................      Gestionar ....................      Primitor ....................", ln=1)
-
-    # ---------------------------------------------------------
-    # PAGINA 3: DECLARATIE DE CONFORMITATE
-    # ---------------------------------------------------------
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 14); pdf.cell(0, 10, "DECLARATIE DE CONFORMITATE", align='C', ln=1); pdf.ln(10)
-    pdf.set_font("Arial", '', 11)
-    decl_text = f"Subscrisa {f_data['Nume']}, cu sediul in {f_data['Adresa']}, declaram pe propria raspundere ca produsele livrate cu Avizul Nr. {order_no}/{data_azi} respecta normele de calitate si siguranta in vigoare."
-    pdf.multi_cell(0, 7, clean_text(decl_text)); pdf.ln(10)
-    pdf.set_font("Arial", 'B', 10)
-    for item in payload_fiscal: pdf.cell(0, 6, clean_text(f"- {item['Nomenclator Oficial']}"), ln=1)
-    pdf.ln(30); pdf.cell(0, 6, "Semnatura Manager / Calitate,", ln=1)
 
     filepath = os.path.join(PDF_DIR, f"DOCUMENTE_NEXUS_{order_no}.pdf")
     pdf.output(filepath)
@@ -179,12 +163,17 @@ def render_lansare_module():
     if 'mod_previzualizare' not in st.session_state: st.session_state.mod_previzualizare = False
     if 'istoric_comenzi_live' not in st.session_state: st.session_state.istoric_comenzi_live = []
 
-    st.title("📦 NEXUS Lansare Comenzi")
+    # BANNER CU NUMĂR COMANDĂ
+    col_titlu, col_cmd = st.columns([4, 1])
+    with col_titlu: st.title("📦 NEXUS Lansare Comenzi")
+    with col_cmd: st.info(f"**Nr. Cmd:** {st.session_state.order_number}\n\n**Data:** {datetime.now().strftime('%d.%m.%Y')}")
+
     tab1, tab2 = st.tabs(["🛒 Formare Comandă", "🚚 Gestiune Rampă & Acte"])
     
     with tab1:
         if not st.session_state.mod_previzualizare:
-            client_ales = st.selectbox("Client", list(clients_data.keys()))
+            client_ales = st.selectbox("Client (Atenție: schimbarea golește coșul!)", list(clients_data.keys()), on_change=reset_cart)
+            
             baza_produse = list(st.session_state.db.keys())
             aliasuri_client_curent = client_aliases.get(client_ales, {})
             produse_disponibile = baza_produse + list(aliasuri_client_curent.keys())
@@ -196,27 +185,22 @@ def render_lansare_module():
                 alias_folosit = selected_option
                 st.success(f"🔄 Alias recunoscut: **{selected_option}** = **{prod_name}**")
             else:
-                prod_name = selected_option
-                alias_folosit = None
+                prod_name = selected_option; alias_folosit = None
 
             p_data = st.session_state.db[prod_name]
             av_pal, av_box = get_available_stock_ui(prod_name)
             
             col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-            col_s1.metric("📦 Stoc PALEȚI", av_pal)
-            col_s2.metric("📦 Stoc CUTII", av_box)
-            col_s3.metric("🔄 Conversie WMS", f"{p_data['conversion']} cutii/pal")
-            col_s4.metric("⚖️ Conversie Fiscală", f"{p_data['conversie_baza']} {p_data['um_baza']}/cutie")
+            col_s1.metric("📦 Stoc PALEȚI", av_pal); col_s2.metric("📦 Stoc CUTII", av_box)
+            col_s3.metric("🔄 Conversie WMS", f"{p_data['conversion']} cutii/pal"); col_s4.metric("⚖️ Conversie Fiscală", f"{p_data['conversie_baza']} {p_data['um_baza']}/cutie")
             
             col_q1, col_q2, col_goala = st.columns([1, 1, 2])
             with col_q1: order_pal = st.number_input("Nr. PALEȚI:", min_value=0, step=1, key=f'input_pal_{st.session_state.reset_counter}')
             with col_q2: order_box = st.number_input("Nr. CUTII (fracție):", min_value=0, step=1, key=f'input_box_{st.session_state.reset_counter}')
             
             if st.button("➕ Adaugă în Listă"):
-                if order_pal == 0 and order_box == 0:
-                    st.warning("Introduceți o cantitate.")
-                elif not calculate_delta(prod_name, order_pal, order_box):
-                    st.error("❌ STOC INSUFICIENT!")
+                if order_pal == 0 and order_box == 0: st.warning("Introduceți o cantitate.")
+                elif not calculate_delta(prod_name, order_pal, order_box): st.error("❌ STOC INSUFICIENT!")
                 else:
                     st.session_state.schita_comanda.append({
                         "Produs": prod_name, "Cod_NIR": p_data['cod_nir'], "Alias_Folosit": alias_folosit,
@@ -226,7 +210,6 @@ def render_lansare_module():
                     force_reset(); st.rerun()
 
             st.divider()
-
             if len(st.session_state.schita_comanda) > 0:
                 st.markdown(f"#### 🛒 Produse în comandă (Către: **{client_ales}**)")
                 h1, h2, h3, h4, h5 = st.columns([3, 2, 2, 2, 1])
@@ -243,16 +226,15 @@ def render_lansare_module():
                     if c5.button("❌", key=f"del_row_{idx}"): st.session_state.schita_comanda.pop(idx); st.rerun()
                 
                 st.markdown("<hr style='margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-                
                 c_btn1, c_btn2 = st.columns([1, 3])
                 with c_btn1:
-                    if st.button("🗑️ Golește Lista"): st.session_state.schita_comanda = []; st.rerun()
+                    if st.button("🗑️ Golește Lista"): reset_cart(); st.rerun()
                 with c_btn2:
                     if st.button("👁️ Analizează Scindarea Dimo-NEXUS", type="primary", use_container_width=True):
                         st.session_state.client_temporar_comandat = client_ales
                         st.session_state.mod_previzualizare = True; st.rerun()
 
-        # ECRAN B: PREVIZUALIZARE
+        # ECRAN B: PREVIZUALIZARE DIMO-NEXUS
         else:
             client_ales_prev = st.session_state.client_temporar_comandat
             st.markdown("### 🔍 Previzualizare: Dimo-NEXUS")
@@ -264,16 +246,17 @@ def render_lansare_module():
                 P = st.session_state.db[nume_oficial]['conversion']; L = st.session_state.db[nume_oficial]['stock_box']
                 C = item['Cutii']; pallets_ordered = item['Paleti']
                 
+                # --- LOGICA NOUĂ, CLARĂ PENTRU STIVUITORIST ---
                 if C > 0:
                     if (P - C) < C and L < C:
                         if pallets_ordered > 0: payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nume_oficial} (Sigilat)", "Cant": str(pallets_ordered), "UM": "PAL"})
-                        payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nume_oficial} (EXTRAGE {P - C} cutii)", "Cant": "1", "UM": "PAL"})
+                        payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nume_oficial} (Din 1 PALET: Extrage si lasa in depozit {P - C} cutii)", "Cant": str(C), "UM": "Cutii"})
                     else:
                         if pallets_ordered > 0: payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nume_oficial} (Sigilat)", "Cant": str(pallets_ordered), "UM": "PAL"})
-                        if C <= L: payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nume_oficial} (Din stoc liber)", "Cant": str(C), "UM": "Cutii"})
+                        if C <= L: payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nume_oficial} (Iei din stoc liber)", "Cant": str(C), "UM": "Cutii"})
                         else:
-                            if L > 0: payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nume_oficial} (Goleste liber)", "Cant": str(L), "UM": "Cutii"})
-                            payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nume_oficial} (Din palet nou)", "Cant": str(C - L), "UM": "Cutii"})
+                            if L > 0: payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nume_oficial} (Golesti stoc liber)", "Cant": str(L), "UM": "Cutii"})
+                            payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nume_oficial} (Desfaci 1 Palet Nou)", "Cant": str(C - L), "UM": "Cutii"})
                 else:
                     if pallets_ordered > 0: payload_logistic_curent.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nume_oficial} (Sigilat)", "Cant": str(pallets_ordered), "UM": "PAL"})
 
@@ -296,20 +279,37 @@ def render_lansare_module():
                         stoc_curent = get_total_boxes(prod)
                         stoc_ramas = stoc_curent - ((pallets_ordered * P) + C)
                         st.session_state.db[prod]['stock_pal'] = stoc_ramas // P; st.session_state.db[prod]['stock_box'] = stoc_ramas % P
-                    st.session_state.istoric_comenzi_live.append({"Comanda": st.session_state.order_number, "Client": client_ales_prev, "Payload_Logistic": payload_logistic_curent, "Payload_Fiscal": payload_fiscal_curent, "Status": "Asteapta Incarcare"})
+                    
+                    st.session_state.istoric_comenzi_live.append({
+                        "Comanda": st.session_state.order_number, "Client": client_ales_prev,
+                        "Payload_Logistic": payload_logistic_curent, "Payload_Fiscal": payload_fiscal_curent, "Status": "Asteapta Incarcare"
+                    })
                     st.session_state.order_number += 1; st.session_state.schita_comanda = []; st.session_state.mod_previzualizare = False; st.rerun()
 
     with tab2:
-        st.markdown("### 🚚 Emiteri Acte PDF")
+        st.markdown("### 🚚 Gestiune Rampă")
         if len(st.session_state.istoric_comenzi_live) == 0: st.info("Nicio comandă la rampă.")
+        
         for idx, cmd in enumerate(st.session_state.istoric_comenzi_live):
             st.write(f"**Cmd NEXUS-{cmd['Comanda']} | {cmd['Client']}** -> Status: {cmd['Status']}")
+            
+            with st.expander("👁️ Vezi Detaliile Comenzii"):
+                st.dataframe(pd.DataFrame(cmd['Payload_Logistic']), hide_index=True)
+                
             if cmd['Status'] == "Asteapta Incarcare":
-                if st.button("✅ Confirmare Încărcare", key=f"inc_{idx}"): st.session_state.istoric_comenzi_live[idx]['Status'] = "Incarcat"; st.rerun()
+                col_a, col_b = st.columns(2)
+                with col_a: 
+                    if st.button("✅ Confirmare Încărcare", key=f"inc_{idx}", type="primary"): 
+                        st.session_state.istoric_comenzi_live[idx]['Status'] = "Incarcat"; st.rerun()
+                with col_b:
+                    if st.button("❌ Anulează comanda", key=f"del_{idx}"):
+                        st.session_state.istoric_comenzi_live.pop(idx); st.rerun()
+                        
             elif cmd['Status'] == "Incarcat":
                 if st.button("🖨️ EMITE ACTE", type="primary", key=f"emit_{idx}"):
                     pdf_p = generate_pdf_document(cmd['Comanda'], cmd['Client'], cmd['Payload_Fiscal'], cmd['Payload_Logistic'])
                     st.session_state.istoric_comenzi_live[idx]['Status'] = "Documente Generate"; st.session_state.istoric_comenzi_live[idx]['pdf_path'] = pdf_p; st.rerun()
+                    
             elif cmd['Status'] == "Documente Generate":
                 display_pdf(cmd['pdf_path'])
                 with open(cmd['pdf_path'], "rb") as file: st.download_button("📥 Descarcă", data=file, file_name=f"Aviz_{cmd['Comanda']}.pdf", mime="application/pdf")
