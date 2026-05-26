@@ -175,7 +175,10 @@ def render_lansare_module():
                 if C > 0:
                     if (P - C) < C and L < C:
                         if pal > 0: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} (Sigilat)", "Cant": str(pal), "UM": "PAL"})
-                        sfat = f"(💡 Sfat prietenesc: Ia 1 palet intreg, da jos {P - C} cutii si lasa-le pe raft)"
+                       
+                        payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": nf, "Cant": str(C), "UM": "Cutii"})
+                        payload_log.append({"Cod Gestiune": " ↳ ", "Denumire": f"🍺 Sfat: Ia 1 palet intreg, da jos {P - C} cutii si lasa-le pe raft", "Cant": "-", "UM": "-"})
+                        
                         payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} {sfat}", "Cant": str(C), "UM": "Cutii"})
                     else:
                         if pal > 0: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} (Sigilat)", "Cant": str(pal), "UM": "PAL"})
