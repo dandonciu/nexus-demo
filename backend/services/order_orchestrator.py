@@ -171,21 +171,22 @@ def render_lansare_module():
             for item in st.session_state.schita_comanda:
                 nf = item['Produs']; P = st.session_state.db[nf]['conversion']; L = st.session_state.db[nf]['stock_box']; C = item['Cutii']; pal = item['Paleti']
                 
-                # NOUA LOGICA WMS "IDIOT-PROOF" (CU SFAT PRIETENESC)
                 if C > 0:
                     if (P - C) < C and L < C:
                         if pal > 0: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} (Sigilat)", "Cant": str(pal), "UM": "PAL"})
-                       
                         payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": nf, "Cant": str(C), "UM": "Cutii"})
-                        payload_log.append({"Cod Gestiune": " ↳ ", "Denumire": f"🍺 Sfat: Ia 1 palet intreg, da jos {P - C} cutii si lasa-le pe raft", "Cant": "-", "UM": "-"})
-                        
-                        payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} {sfat}", "Cant": str(C), "UM": "Cutii"})
+                        payload_log.append({"Cod Gestiune": "↳", "Denumire": f"🍺 Sfat: Ia 1 palet intreg, da jos {P - C} cutii si lasa-le pe raft", "Cant": "-", "UM": "-"})
                     else:
                         if pal > 0: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} (Sigilat)", "Cant": str(pal), "UM": "PAL"})
-                        if C <= L: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nf} (Iei din stocul liber de pe raft)", "Cant": str(C), "UM": "Cutii"})
+                        if C <= L: 
+                            payload_log.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": nf, "Cant": str(C), "UM": "Cutii"})
+                            payload_log.append({"Cod Gestiune": "↳", "Denumire": "🍺 Sfat: Iei din stocul liber de pe raft", "Cant": "-", "UM": "-"})
                         else:
-                            if L > 0: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nf} (Iei {L} cutii ramase libere)", "Cant": str(L), "UM": "Cutii"})
-                            payload_log.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": f"{nf} (Desfaci 1 Palet Nou pentru restul)", "Cant": str(C - L), "UM": "Cutii"})
+                            if L > 0: 
+                                payload_log.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": nf, "Cant": str(L), "UM": "Cutii"})
+                                payload_log.append({"Cod Gestiune": "↳", "Denumire": f"🍺 Sfat: Iei {L} cutii ramase libere", "Cant": "-", "UM": "-"})
+                            payload_log.append({"Cod Gestiune": item['Cod_Depozit_Box'], "Denumire": nf, "Cant": str(C - L), "UM": "Cutii"})
+                            payload_log.append({"Cod Gestiune": "↳", "Denumire": "🍺 Sfat: Desfaci 1 Palet Nou pentru restul", "Cant": "-", "UM": "-"})
                 else:
                     if pal > 0: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} (Sigilat)", "Cant": str(pal), "UM": "PAL"})
                 
