@@ -9,10 +9,9 @@ from fpdf import FPDF
 # Importăm datele din DB-ul nostru
 from backend.database.clients_config import clients_data, furnizor_data, client_aliases
 
-# Setări foldere PDF
-EXPORT_DIR = "exports"
-PDF_DIR = os.path.join(EXPORT_DIR, "pdf_docs")
-if not os.path.exists(PDF_DIR): os.makedirs(PDF_DIR)
+import tempfile
+# Setări foldere PDF (Compatibil cu Streamlit Cloud)
+PDF_DIR = tempfile.gettempdir()
 
 # --- FUNCTII UTILE ---
 def force_reset(): st.session_state.reset_counter += 1
