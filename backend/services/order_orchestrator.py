@@ -168,8 +168,14 @@ def render_lansare_module():
             st.markdown("### 🔍 Previzualizare & Lansare")
             
             payload_log = []; payload_fisc = []
+
             for item in st.session_state.schita_comanda:
-                nf = item['Produs']; P = st.session_state.db[nf]['conversion']; L = st.session_state.db[nf]['stock_box']; C = item['Cutii']; pal = item['Paleti']
+                nf = item['Produs']; P = st.session_state.db[nf]['conversion']; L = st.session_state.db[nf]['stock_box']
+                
+                # AUTO-CONVERSIE ABSOLUTĂ (Indiferent ce tastează omul, NEXUS sparge în Paleți + Rest)
+                total_baxuri = (item['Paleti'] * P) + item['Cutii']
+                pal = total_baxuri // P
+                C = total_baxuri % P
                 
                 if C > 0:
                     if (P - C) < C and L < C:
@@ -189,7 +195,9 @@ def render_lansare_module():
                             payload_log.append({"Cod Gestiune": "↳", "Denumire": "🍺 Sfat: Desfaci 1 Palet Nou pentru restul", "Cant": "-", "UM": "-"})
                 else:
                     if pal > 0: payload_log.append({"Cod Gestiune": item['Cod_Depozit_Pal'], "Denumire": f"{nf} (Sigilat)", "Cant": str(pal), "UM": "PAL"})
+
                 
+                payload_fisc.append({"Cod_Depozit": item['Cod_Depozit_Pal'], "Nomenclator Oficial": nf, "Cantitate (U.M.)": f"{total_baxuri * item['Conversie_Baza']} {item['UM_Baza']}"})
                 payload_fisc.append({"Cod_Depozit": item['Cod_Depozit_Pal'], "Nomenclator Oficial": nf, "Cantitate (U.M.)": f"{((pal * P) + C) * item['Conversie_Baza']} {item['UM_Baza']}"})
 
             cp1, cp2 = st.columns(2)
