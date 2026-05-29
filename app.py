@@ -144,5 +144,5 @@ elif st.session_state.current_module == 'SmartBill':
 
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("🎨 Studio Etichete AI (Nano-Banana 🍌)")
+    st.title("🎨 Studio Etichete AI)")
     st.info("Aici vom implementa zona de Drag & Drop PDF -> Conversie JPG -> AI Prompt -> Return PDF.")
