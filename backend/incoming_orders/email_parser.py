@@ -12,7 +12,7 @@ def render_email_parser_module():
     
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.subheader("📬 Inbox Comenzi Necitite")
+        st.subheader("📬 De ex: Inbox Comenzi Necitite")
         # Un tabel de mockup (fals deocamdată) ca să vedem cum va arăta
         mock_emails = pd.DataFrame({
             "Client": ["S.C. SIDE GRUP S.R.L.", "DSCM TECH SRL", "CORPORATIA ALPHA"],
