@@ -104,8 +104,8 @@ if st.session_state.current_module == 'Home':
     with col7:
         st.markdown('<div class="tile"><h3>📊 Manager Analytics</h3><p>KPIs & Istoric Livrări</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Dashboard", use_container_width=True):
-            if st.session_state.role == "manager":
-                st.session_state.current_module = 'Manager'; st.rerun()
+        if st.session_state.role == "manager":
+            st.session_state.current_module = 'Manager'; st.rerun()
             else: st.error("⛔ Interzis. Doar Manager.")
 
     with col8:
