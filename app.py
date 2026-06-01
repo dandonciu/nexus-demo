@@ -96,11 +96,11 @@ if st.session_state.current_module == 'Home':
         if st.button("Verifică Inbox", use_container_width=True):
             st.session_state.current_module = 'Email'; st.rerun()
 
-    with col6:
+   with col6:
         st.markdown('<div class="tile"><h3>🎨 Studio Etichete AI</h3><p>Editare PDF/JPG cu AI</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Studio", use_container_width=True):
-            st.session_state.current_module = 'Etichete'; st.rerun()
-
+            st.switch_page("pages/etichete.py")  # Asta te va trimite direct în noul tău fișier!
+            
     with col7:
         st.markdown('<div class="tile"><h3>📊 Manager Analytics</h3><p>KPIs & Istoric Livrări</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Dashboard", use_container_width=True):
