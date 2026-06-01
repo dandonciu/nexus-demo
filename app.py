@@ -119,7 +119,7 @@ elif st.session_state.current_module == 'Lansare':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     render_lansare_module()
 
-#elif st.session_state.current_module == 'Manager':
+elif st.session_state.current_module == 'Manager':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     render_manager_dashboard()
 
@@ -144,7 +144,7 @@ elif st.session_state.current_module == 'SmartBill':
     c1.button("Ramura A: Facturare & Gestiune", use_container_width=True)
     c2.button("Ramura B: Contabilitate & Încasări", use_container_width=True)
 
-#elif st.session_state.current_module == 'Etichete':
+elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     st.title("🎨 Studio Etichete AI")
     st.info("Fluxul de generare / modificare a etichetelor:")
