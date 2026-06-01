@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 def render_email_parser_module():
-    st.title("📨 Căsuța de Turtă Dulce (NEXUS Inbox)")
+    st.title("📨 NEXUS Inbox)")
     st.info("🤖 Botul NEXUS monitorizează adresa de email (ex: comenzi@novasafe.ro) pentru a prelua și decoda fișierele Excel sau PDF de la clienți.")
     
     st.divider()
