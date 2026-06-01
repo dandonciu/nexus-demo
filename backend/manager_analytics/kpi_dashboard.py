@@ -92,17 +92,13 @@ def render_manager_dashboard():
         st.markdown("#### 📆 1. Volum Livrări – Ultimele 12 Luni")
         df_luni = df_toate.groupby(["Luna", "Status_Plata"])["Volum_Paleti"].sum().reset_index()
         
-        fig_luni = px.bar(df_luni, x="Luna", y="Volum_Paleti", color="Status_Plata",
-                          color_discrete_map={"Achitat": "#28a745", "În termen": "#17a2b8", "Restanță": "#dc3545"},
-                          title=f"{analiza_produs} → {analiza_client}")
-        
-        fig_luni.update_layout(hovermode='closest')
-        fig_luni.update_traces(
-            hovertemplate="<b>%{y:.0f}</b> paleți<extra></extra>",
-            hoverlabel=dict(bgcolor="#1E1E2E", font_color="white", font_size=13, bordercolor="#00ADB5")
-        )
-        fig_luni.update_layout(xaxis_tickangle=-45, bargap=0.15, height=400)
-        st.plotly_chart(fig_luni, use_container_width=True)
+      fig_top = px.bar(df_top, x="Client", y="Volum_Paleti", 
+                 color_discrete_sequence=["#00ADB5"],  # Culoare fixă, 100% vizibilă pe dark
+                 title="Top Clienți (Total)")
+fig_top.update_traces(marker_line_color='white', marker_line_width=1.5)  # Contur clar
+fig_top.update_layout(hovermode='closest', xaxis_tickangle=-45, bargap=0.3, height=350)
+fig_top.update_traces(hovertemplate="<b>%{y:.0f}</b> paleți<extra></extra>",
+                      hoverlabel=dict(bgcolor="#1E1E2E", font_color="white", bordercolor="#00ADB5"))
 
         st.divider()
 
