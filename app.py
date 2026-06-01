@@ -144,4 +144,6 @@ elif st.session_state.current_module == 'SmartBill':
     c1.button("Ramura A: Facturare & Gestiune", use_container_width=True)
     c2.button("Ramura B: Contabilitate & Încasări", use_container_width=True)
 
+if st.button("Du-mă la Etichete"):
+    st.switch_page("pages/etichete.py")
 
