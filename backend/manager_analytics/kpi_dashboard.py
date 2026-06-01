@@ -4,6 +4,7 @@ import plotly.express as px
 import math
 
 def force_inject_mock_data():
+    """Simulează baza de date pentru demo. Va fi înlocuită cu SQLite ulterior."""
     st.session_state.db = {
         "Role Autocut Albe TAD 220m": {
             "cod_master": "MST-BKTp721", "oracle_pal": "PAL BKTp721", "oracle_box": "BKTp721",
@@ -34,7 +35,7 @@ def force_inject_mock_data():
 
 def render_manager_dashboard():
     clients_mock = force_inject_mock_data()
-    st.title("📊 NEXUS Manager Analytics")
+    st.title(" NEXUS Manager Analytics")
 
     # === FILTRE GLOBALE ===
     col_f1, col_f2 = st.columns(2)
@@ -49,39 +50,43 @@ def render_manager_dashboard():
     df_toate["Data_Obj"] = pd.to_datetime(df_toate["Data"], format="%d-%m-%Y")
     df_toate["Luna"] = df_toate["Data_Obj"].dt.to_period("M").dt.to_timestamp().dt.strftime("%b %Y")
 
-    # === RAPORT 1: Vânzări pe 12 LUNI ===
+    # === RAPORT 1: Vânzări pe 12 Luni ===
     st.markdown("#### 📈 1. Volum Livrări – Ultimele 12 Luni")
     df_luni = df_toate.groupby(["Luna", "Status_Plata"])["Volum_Paleti"].sum().reset_index()
     
     fig_luni = px.bar(df_luni, x="Luna", y="Volum_Paleti", color="Status_Plata",
                       color_discrete_map={"Achitat": "#28a745", "În termen": "#17a2b8", "Restanță": "#dc3545"},
-                      hover_data={"Volum_Paleti": ":.0f paleți"}, title=f"{analiza_produs} → {analiza_client}")
+                      hover_data={"Volum_Paleti": ":.0f paleți", "Luna": False, "Status_Plata": False},
+                      title=f"{analiza_produs} → {analiza_client}")
     fig_luni.update_layout(xaxis_tickangle=-45, bargap=0.2, height=400, hovermode="x")
     st.plotly_chart(fig_luni, use_container_width=True)
 
-    # === RAPORT 2: Vânzări per Client (dacă e selectat un produs) ===
+    st.divider()
+
+    # === RAPORT 2: Distribuție per Client ===
     st.markdown("#### 🏆 2. Distribuție Vânzări per Client")
     df_clienti = df_toate.groupby("Client")["Volum_Paleti"].sum().reset_index().sort_values("Volum_Paleti", ascending=False)
     
     fig_clienti = px.bar(df_clienti, x="Client", y="Volum_Paleti", color="Volum_Paleti",
-                         color_continuous_scale="Blues", hover_data={"Volum_Paleti": ":.0f paleți"})
+                         color_continuous_scale="Blues",
+                         hover_data={"Volum_Paleti": ":.0f paleți", "Client": False})
     fig_clienti.update_layout(xaxis_tickangle=-45, bargap=0.3, height=350, hovermode="x", coloraxis_showscale=False)
     st.plotly_chart(fig_clienti, use_container_width=True)
 
-    # === RAPORT 3: Stocuri – OK / Medii / Critice ===
+    st.divider()
+
+    # === RAPORT 3: Status Stocuri (WMS) ===
     st.markdown("#### 📦 3. Status Stocuri (WMS)")
     p = st.session_state.db[analiza_produs]
     total_cutii = (p["stock_pal"] * p["conversion"]) + p["stock_box"]
-    prag_crit = p["conversion"] * 0.3
-    prag_med = p["conversion"] * 0.7
     
     if total_cutii >= p["conversion"] * 2:
-        status, color, msg = "🟢 OK", "#28a745", "Stoc suficient pentru ≥2 paleți"
-    elif total_cutii >= prag_crit:
-        status, color, msg = "🟡 Mediu", "#ffc107", f"Stoc pentru ~1 palet ({total_cutii:.0f} cutii)"
+        status, msg = "🟢 OK", "Stoc suficient pentru ≥2 paleți"
+    elif total_cutii >= p["conversion"] * 0.3:
+        status, msg = "🟡 Mediu", f"Stoc pentru ~1 palet ({total_cutii:.0f} cutii)"
     else:
-        status, color, msg = "🔴 Critic", "#dc3545", f"Stoc sub prag ({total_cutii:.0f} cutii < {prag_crit:.0f})"
-    
+        status, msg = "🔴 Critic", f"Stoc sub prag ({total_cutii:.0f} cutii)"
+
     col_s1, col_s2, col_s3 = st.columns(3)
     col_s1.metric("Paleți", p["stock_pal"])
     col_s2.metric("Cutii libere", p["stock_box"])
