@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import math
 
 def force_inject_mock_data():
-    """Simulează baza de date pentru demo. 
-    FIX: Am eliminat spațiile de la finalul cheilor pentru a preveni erorile de KeyError."""
+    """Simulează DB pentru demo. CHEI CURATE (fără spații finale) pentru a preveni crash-uri."""
     st.session_state.db = {
         "Role Autocut Albe TAD 220m": {
             "cod_master": "MST-BKTp721", "oracle_pal": "PAL BKTp721", "oracle_box": "BKTp721",
@@ -36,97 +34,114 @@ def force_inject_mock_data():
 
 def render_manager_dashboard():
     clients_mock = force_inject_mock_data()
-    st.title("📊 NEXUS Manager Analytics")
+    st.title("📈 NEXUS Manager Analytics")
 
-    # === FILTRE GLOBALE ===
-    col_f1, col_f2 = st.columns(2)
-    with col_f1: analiza_client = st.selectbox(" Client / Filială:", ["TOȚI CLIENȚII"] + clients_mock)
-    with col_f2: analiza_produs = st.selectbox("📦 Produs:", list(st.session_state.db.keys()))
-    st.divider()
+    # ✅ SECȚIUNEA 1: OBLIGATORIU DOUĂ TAB-URI
+    tab_op, tab_an = st.tabs(["⚡ A. Situație Operațională", "📊 B. Privire de Ansamblu (Analiză)"])
 
-    df_toate = st.session_state.db[analiza_produs]["livrari_totale"]
-    df_toate["Data_Obj"] = pd.to_datetime(df_toate["Data"], format="%d-%m-%Y")
-    df_toate["Luna"] = df_toate["Data_Obj"].dt.to_period("M").dt.to_timestamp().dt.strftime("%b %Y")
-
-    # Filtrare pentru graficele specifice (Luni și Istoric)
-    if analiza_client != "TOI CLIENȚII":
-        df_filtrat = df_toate[df_toate["Client"] == analiza_client]
-    else:
-        df_filtrat = df_toate
-
-    with st.tabs(["⚡ Situație Operativă", "📊 Rapoarte & Analiză"]):
-
-        # TAB 1: OPERATIONAL
-        st.subheader(" LIVE FEED: Comenzi Noi")
+    # ==========================================
+    # TAB 1: OPERAȚIONAL
+    # ==========================================
+    with tab_op:
+        st.subheader("🔴 LIVE FEED: Comenzi Noi")
         if st.session_state.istoric_comenzi_live:
-            st.dataframe(pd.DataFrame(st.session_state.istoric_comenzi_live).tail(5), hide_index=True)
+            st.dataframe(pd.DataFrame(st.session_state.istoric_comenzi_live).tail(5), hide_index=True, use_container_width=True)
         else:
             st.info("Nicio comandă nouă lansată astăzi.")
 
         st.divider()
-        st.subheader("📦 Status Stoc (WMS)")
-        p = st.session_state.db[analiza_produs]
-        col_s1, col_s2, col_s3 = st.columns(3)
-        col_s1.metric("Paleți", p["stock_pal"])
-        col_s2.metric("Cutii libere", p["stock_box"])
-        # Logică simplă de status
-        total = (p["stock_pal"] * p["conversion"]) + p["stock_box"]
-        status = "🟢 OK" if total > p["conversion"] else "🔴 Critic"
-        col_s3.metric("Status", status)
+        st.subheader("📦 Status Stoc Punctual (WMS)")
+        mgr_prod = st.selectbox("Selectare Produs:", list(st.session_state.db.keys()))
+        p_val = st.session_state.db[mgr_prod]
+        
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Paleți Intacți", p_val['stock_pal'])
+        c2.metric("Cutii Libere", p_val['stock_box'])
+        c3.metric("Conversie WMS", f"{p_val['conversion']} cutii/palet")
+        
+        total_boxes = (p_val['stock_pal'] * p_val['conversion']) + p_val['stock_box']
+        c4.metric("Total Disponibil (Cutii)", total_boxes)
 
+        if p_val['stock_box'] > (p_val['conversion'] * 0.7):
+            st.error(f"🔴 ATENȚIE: Prea multe cutii libere ({p_val['stock_box']}). Recomandare: Împachetează în paleți.")
+        elif p_val['stock_box'] > 0:
+            st.warning("🟠 INFO: Există fracțiuni desfăcute în depozit.")
+        else:
+            st.success("🟢 OPTIM: Stoc compact (doar paleți sigilați).")
+
+    # ==========================================
+    # TAB 2: ANALIZĂ & RAPORTĂRI
+    # ==========================================
+    with tab_an:
+        col_f1, col_f2 = st.columns(2)
+        with col_f1: analiza_client = st.selectbox("🎯 Client / Filială:", ["TOȚI CLIENȚII"] + clients_mock)
+        with col_f2: analiza_produs = st.selectbox("📦 Produs:", list(st.session_state.db.keys()), key="mgr_prod_an")
         st.divider()
 
-        # TAB 2: ANALYTICS & RAPORTĂRI
-        st.subheader("📈 Rapoarte Performanță")
+        df_toate = st.session_state.db[analiza_produs]["livrari_totale"]
+        # Filtrare corectă (fără spații la chei)
+        if analiza_client != "TOȚI CLIENȚII":
+            df_toate = df_toate[df_toate["Client"] == analiza_client]
 
-        # 1. GRAFIC LUNI (12 Luni vizibile)
-        st.markdown("#### 📆 Volum Livrări pe Luni")
-        df_luni = df_filtrat.groupby(["Luna", "Status_Plata"])["Volum_Paleti"].sum().reset_index()
+        df_toate["Data_Obj"] = pd.to_datetime(df_toate["Data"], format="%d-%m-%Y")
+        df_toate["Luna"] = df_toate["Data_Obj"].dt.to_period("M").dt.to_timestamp().dt.strftime("%b %Y")
 
+        # ==========================================
+        # GRAFIC 1: 12 LUNI
+        # ==========================================
+        st.markdown("#### 📆 1. Volum Livrări – Ultimele 12 Luni")
+        df_luni = df_toate.groupby(["Luna", "Status_Plata"])["Volum_Paleti"].sum().reset_index()
+        
         fig_luni = px.bar(df_luni, x="Luna", y="Volum_Paleti", color="Status_Plata",
                           color_discrete_map={"Achitat": "#28a745", "În termen": "#17a2b8", "Restanță": "#dc3545"},
                           title=f"{analiza_produs} → {analiza_client}")
         
-        # FIX HOVER: Caseta apare doar la cursor (deasupra barei), fără text pe axa X
-        fig_luni.update_layout(hovermode='closest') 
-        fig_luni.update_traces(hovertemplate="<b>%{y:.0f}</b> paleți<extra></extra>")
-        
-        fig_luni.update_layout(xaxis_tickangle=-45, bargap=0.15, height=400) # bargap mic pt 12 luni
+        fig_luni.update_layout(hovermode='closest')
+        fig_luni.update_traces(
+            hovertemplate="<b>%{y:.0f}</b> paleți<extra></extra>",
+            hoverlabel=dict(bgcolor="#1E1E2E", font_color="white", font_size=13, bordercolor="#00ADB5")
+        )
+        fig_luni.update_layout(xaxis_tickangle=-45, bargap=0.15, height=400)
         st.plotly_chart(fig_luni, use_container_width=True)
 
         st.divider()
 
-        # 2. GRAFIC TOP CLIENȚI (Distribuție)
-        st.markdown("#### 🏆 Distribuție Volum per Client")
+        # ==========================================
+        # GRAFIC 2: DISTRIBUȚIE PER CLIENT
+        # ==========================================
+        st.markdown("####  2. Distribuție Volum per Client")
         df_top = df_toate.groupby("Client")["Volum_Paleti"].sum().reset_index().sort_values("Volum_Paleti", ascending=False)
         
         fig_top = px.bar(df_top, x="Client", y="Volum_Paleti", color="Volum_Paleti",
                          color_continuous_scale="Blues", title="Top Clienți (Total)")
         
-        # FIX HOVER
         fig_top.update_layout(hovermode='closest')
-        fig_top.update_traces(hovertemplate="<b>%{y:.0f}</b> paleți<extra></extra>")
-        
+        fig_top.update_traces(
+            hovertemplate="<b>%{y:.0f}</b> paleți<extra></extra>",
+            hoverlabel=dict(bgcolor="#1E1E2E", font_color="white", font_size=13, bordercolor="#00ADB5")
+        )
         fig_top.update_layout(xaxis_tickangle=-45, bargap=0.3, height=350, coloraxis_showscale=False)
         st.plotly_chart(fig_top, use_container_width=True)
 
         st.divider()
 
-        # 3. GRAFIC ISTORIC DETALIAT
-        st.markdown("#### 🔎 Istoric Zilnic (Detaliu)")
+        # ==========================================
+        # GRAFIC 3: ISTORIC ZILNIC
+        # ==========================================
+        st.markdown("#### 🔎 3. Istoric Zilnic (Detaliu)")
         if analiza_client == "TOȚI CLIENȚII":
-            st.info("💡 Pentru detalii zilnice, te rog să selectezi un anumit client.")
-        elif df_filtrat.empty:
+            st.info("💡 Pentru detalii zilnice, selectează un anumit client din filtrul de sus.")
+        elif df_toate.empty:
             st.warning("Nu există date pentru selecția curentă.")
         else:
-            fig_detaliu = px.bar(df_filtrat, x="Data", y="Volum_Paleti", color="Status_Plata",
+            fig_detaliu = px.bar(df_toate, x="Data", y="Volum_Paleti", color="Status_Plata",
                                  color_discrete_map={"Achitat": "#28a745", "În termen": "#17a2b8", "Restanță": "#dc3545"},
                                  title=f"Livrări la nivel de zi - {analiza_client}")
             
-            # FIX HOVER
             fig_detaliu.update_layout(hovermode='closest')
-            # Afișăm data și volumul în caseta de hover
-            fig_detaliu.update_traces(hovertemplate="<b>%{y:.0f}</b> paleți<br>%{x}<extra></extra>")
-            
+            fig_detaliu.update_traces(
+                hovertemplate="<b>%{y:.0f}</b> paleți<br>%{x}<extra></extra>",
+                hoverlabel=dict(bgcolor="#1E1E2E", font_color="white", font_size=13, bordercolor="#00ADB5")
+            )
             fig_detaliu.update_layout(xaxis_tickangle=-45, bargap=0.3, height=400)
             st.plotly_chart(fig_detaliu, use_container_width=True)
