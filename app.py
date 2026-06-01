@@ -130,10 +130,12 @@ elif st.session_state.current_module == 'Email':
 elif st.session_state.current_module == 'Receptie':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     st.title("📥 Modul Recepție Marfă (Așteaptă Dezvoltare)")
+    st.info ("📥 Modul Recepție Marfă - -> În Dezvoltare")
 
 elif st.session_state.current_module == 'Transport':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     st.title("🚚 Modul Transport & Curieri (Așteaptă Dezvoltare)")
+    st.info("🚚 Modul Transport - -> În Dezvoltare")
 
 elif st.session_state.current_module == 'SmartBill':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
