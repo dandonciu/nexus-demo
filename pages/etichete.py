@@ -1,13 +1,14 @@
 import streamlit as st
 
-st.set_page_config(page_title="Studio Etichete AI", page_icon="🏷️", layout="wide")
+st.set_page_config(page_title="Studio Etichete AI", page_icon="🎨", layout="wide")
 
-st.title("🏷️ Studio Etichete AI")
-st.markdown("Procesare grafică automatizată pentru etichete via OpenAI.")
+st.title("🎨 Studio Etichete AI")
+st.info("Fluxul de generare / modificare a etichetelor:\n\nEticheta originală (pdf) -> Drag&Drop/Upload + Prompt -> Trimite -> Pdf modificat -> Download (pdf).")
+
 st.divider()
 
-# Caseta cu exemplul de prompt cerută de tine:
-st.info("""
+# Caseta ta cu promptul:
+st.success("""
 **Exemplu de prompt:**
 
 La imaginea atașată te rog să faci următoarele modificări: 
@@ -21,8 +22,3 @@ La imaginea atașată te rog să faci următoarele modificări:
 *Img1_eticheta.pdf*  
 *Img2_Cod_de_bare.pdf*
 """)
-
-# Aici va urma restul codului pentru upload fisiere si API OpenAI...
-st.file_uploader("Încarcă fișierele (PDF/JPG)", accept_multiple_files=True)
-st.text_area("Introdu prompt-ul tău aici:")
-st.button("Procesează Eticheta 🚀")
