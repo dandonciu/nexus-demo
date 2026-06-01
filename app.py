@@ -144,8 +144,4 @@ elif st.session_state.current_module == 'SmartBill':
     c1.button("Ramura A: Facturare & Gestiune", use_container_width=True)
     c2.button("Ramura B: Contabilitate & Încasări", use_container_width=True)
 
-elif st.session_state.current_module == 'Etichete':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("🎨 Studio Etichete AI")
-    st.info("Fluxul de generare / modificare a etichetelor:")
-    st.info("Eticheta originală (pdf)  ->  ->   Drag&Drop/Upload + Prompt (modificări ce/cum vrem) ->  ->  Trimite  ->  ->   Pdf modificat ->  ->  Download (pdf).")
+
