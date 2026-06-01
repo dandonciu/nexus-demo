@@ -103,7 +103,7 @@ def render_manager_dashboard():
         df_toate['Data_Obj'] = pd.to_datetime(df_toate['Data'], format='%d-%m-%Y')
         df_toate['Luna'] = df_toate['Data_Obj'].dt.strftime('%b %Y')
         
-        st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}**")
+        st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}** (Toți Clienții)")
         df_luni = df_toate.groupby(['Luna', 'Status_Plata'])['Volum_Paleti'].sum().reset_index()
         
         fig_luni = px.bar(
@@ -113,7 +113,7 @@ def render_manager_dashboard():
             barmode='group' 
         )
         fig_luni.update_traces(textposition='outside')
-        fig_luni.update_layout(bargap=0.4, xaxis_title="Lună", yaxis_title="Număr Paleți") 
+        fig_luni.update_layout(bargap=0.4, xaxis_title="Lună", yaxis_title="Număr Paleți Livrați")
         st.plotly_chart(fig_luni, use_container_width=True)
 
         st.divider()
@@ -143,7 +143,7 @@ def render_manager_dashboard():
             fig_detaliu = px.bar(
                 df_filtrat, x='Data', y='Volum_Paleti', color='Status_Plata',
                 text='Volum_Paleti', color_discrete_map=color_discrete_map,
-                title="Livrări la nivel de zi"
+                title="Livrări la nivel de zi (Achitat / Restanțe)"
             )
             fig_detaliu.update_traces(textposition='outside', width=0.4)
             fig_detaliu.update_layout(xaxis_type='category', bargap=0.4)
