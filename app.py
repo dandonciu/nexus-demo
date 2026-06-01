@@ -1,20 +1,12 @@
 import streamlit as st
-from backend.database.clients_config import init_db
-from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
-from backend.incoming_orders.email_parser import render_email_parser_module
-from backend.services.order_orchestrator import render_lansare_module
 
 st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
 
 # ==========================================
 # INIȚIALIZARE STĂRI GLOBALE
 # ==========================================
-if 'db' not in st.session_state: st.session_state.db = init_db()
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'role' not in st.session_state: st.session_state.role = None
-if 'current_module' not in st.session_state: st.session_state.current_module = 'Home'
-
-def go_home(): st.session_state.current_module = 'Home'
 
 # ==========================================
 # ECRAN LOGIN
@@ -30,10 +22,12 @@ if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         with st.form("login_form"):
-            pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
+            pwd = st.text_input("Parolă Acces (angajat-no / manager)", type="password")
             if st.form_submit_button("Autentificare", use_container_width=True):
                 if pwd in ["angajat-no", "manager"]:
-                    st.session_state.logged_in = True; st.session_state.role = pwd; st.rerun()
+                    st.session_state.logged_in = True
+                    st.session_state.role = pwd
+                    st.rerun()
                 else: st.error("Acces Respins!")
     st.stop()
 
@@ -57,93 +51,54 @@ c_logo, c_user, c_out = st.columns([8, 2, 1])
 with c_logo: st.markdown("### 🌌 NEXUS Core Orchestrator")
 with c_user: st.markdown(f"<div style='text-align:right; padding-top:10px; color:grey;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
 with c_out:
-    if st.button("🚪 Logout"): st.session_state.logged_in = False; st.rerun()
+    if st.button("🚪 Logout"): 
+        st.session_state.logged_in = False
+        st.rerun()
 st.divider()
 
 # ==========================================
 # ORCHESTRATORUL: LANDING PAGE (CELE 8 PLĂCI)
 # ==========================================
-if st.session_state.current_module == 'Home':
-    
-    st.markdown("#### ⚡ Flux Operațional")
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown('<div class="tile"><h3>📦 Lansare Comenzi</h3><p>Ieșiri, WMS, Avize PDF</p></div>', unsafe_allow_html=True)
-        if st.button("Deschide Lansare", use_container_width=True, type="primary"):
-            st.session_state.current_module = 'Lansare'; st.rerun()
+st.markdown("#### ⚡ Flux Operațional")
+col1, col2, col3, col4 = st.columns(4)
 
-    with col2:
-        st.markdown('<div class="tile"><h3>📥 Recepție & NIR</h3><p>Intrări marfă în Gestiune</p></div>', unsafe_allow_html=True)
-        if st.button("Deschide Recepție", use_container_width=True):
-            st.session_state.current_module = 'Receptie'; st.rerun()
+with col1:
+    st.markdown('<div class="tile"><h3>📦 Lansare Comenzi</h3><p>Ieșiri, WMS, Avize PDF</p></div>', unsafe_allow_html=True)
+    if st.button("Deschide Lansare", use_container_width=True, type="primary"):
+        st.switch_page("pages/comenzi.py")  # Face legătura cu fișierul tău nou!
 
-    with col3:
-        st.markdown('<div class="tile"><h3>🚚 Modul Transport</h3><p>Comenzi Curier & Status</p></div>', unsafe_allow_html=True)
-        if st.button("Deschide Transport", use_container_width=True):
-            st.session_state.current_module = 'Transport'; st.rerun()
+with col2:
+    st.markdown('<div class="tile"><h3>📥 Recepție & NIR</h3><p>Intrări marfă în Gestiune</p></div>', unsafe_allow_html=True)
+    st.button("Deschide Recepție", use_container_width=True, disabled=True)
 
-    with col4:
-        st.markdown('<div class="tile"><h3>🧾 SmartBill HUB</h3><p>Facturare & Contabilitate</p></div>', unsafe_allow_html=True)
-        if st.button("Deschide SmartBill", use_container_width=True):
-            st.session_state.current_module = 'SmartBill'; st.rerun()
+with col3:
+    st.markdown('<div class="tile"><h3>🚚 Modul Transport</h3><p>Comenzi Curier & Status</p></div>', unsafe_allow_html=True)
+    st.button("Deschide Transport", use_container_width=True, disabled=True)
 
-    st.markdown("<br>#### 🛠️ Instrumente, AI & Analiză", unsafe_allow_html=True)
-    col5, col6, col7, col8 = st.columns(4)
+with col4:
+    st.markdown('<div class="tile"><h3>🧾 SmartBill HUB</h3><p>Facturare & Contabilitate</p></div>', unsafe_allow_html=True)
+    st.button("Deschide SmartBill", use_container_width=True, disabled=True)
 
-    with col5:
-        st.markdown('<div class="tile"><h3>📨 Inbox Auto-Procesare</h3><p>Email B2B & Auto-Reply</p></div>', unsafe_allow_html=True)
-        if st.button("Verifică Inbox", use_container_width=True):
-            st.session_state.current_module = 'Email'; st.rerun()
+st.markdown("<br>#### 🛠️ Instrumente, AI & Analiză", unsafe_allow_html=True)
+col5, col6, col7, col8 = st.columns(4)
 
-    with col6:
-        st.markdown('<div class="tile"><h3>🎨 Studio Etichete AI</h3><p>Editare PDF/JPG cu AI</p></div>', unsafe_allow_html=True)
-        if st.button("Deschide Studio", use_container_width=True):
-            st.session_state.current_module = 'Etichete'; st.rerun()
+with col5:
+    st.markdown('<div class="tile"><h3>📨 Inbox Auto-Procesare</h3><p>Email B2B & Auto-Reply</p></div>', unsafe_allow_html=True)
+    st.button("Verifică Inbox", use_container_width=True, disabled=True)
 
-    with col7:
-        st.markdown('<div class="tile"><h3>📊 Manager Analytics</h3><p>KPIs & Istoric Livrări</p></div>', unsafe_allow_html=True)
-        if st.button("Deschide Dashboard", use_container_width=True):
-            if st.session_state.role == "manager":
-                st.session_state.current_module = 'Manager'; st.rerun()
-            else: st.error("⛔ Interzis. Doar Manager.")
+with col6:
+    st.markdown('<div class="tile"><h3>🎨 Studio Etichete AI</h3><p>Editare PDF/JPG cu AI</p></div>', unsafe_allow_html=True)
+    if st.button("Deschide Studio", use_container_width=True):
+        st.switch_page("pages/etichete.py") # Face legătura cu etichetele tale!
 
-    with col8:
-        st.markdown('<div class="tile"><h3>🛡️ Vault Clienți</h3><p>Setări, Baze Date, Backup</p></div>', unsafe_allow_html=True)
-        st.button("În Construcție 🚧", use_container_width=True, disabled=True, key="vault")
+with col7:
+    st.markdown('<div class="tile"><h3>📊 Manager Analytics</h3><p>KPIs & Istoric Livrări</p></div>', unsafe_allow_html=True)
+    if st.button("Deschide Dashboard", use_container_width=True):
+        if st.session_state.role == "manager":
+            st.switch_page("pages/manager.py") # Face legătura cu managerul!
+        else: 
+            st.error("⛔ Interzis. Doar Manager.")
 
-# ==========================================
-# RUTAREA CĂTRE MODULE
-# ==========================================
-elif st.session_state.current_module == 'Lansare':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    render_lansare_module()
-
-elif st.session_state.current_module == 'Manager':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    render_manager_dashboard()
-
-elif st.session_state.current_module == 'Email':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    render_email_parser_module()
-
-elif st.session_state.current_module == 'Receptie':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("📥 Modul Recepție Marfă")
-    st.info ("📥 Modul Recepție Marfă - -> În Dezvoltare")
-
-elif st.session_state.current_module == 'Transport':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("🚚 Modul Transport & Curieri")
-    st.info("🚚 Modul Transport - -> În Dezvoltare")
-
-elif st.session_state.current_module == 'SmartBill':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("🧾 SmartBill HUB")
-    c1, c2 = st.columns(2)
-    c1.button("Ramura A: Facturare & Gestiune", use_container_width=True)
-    c2.button("Ramura B: Contabilitate & Încasări", use_container_width=True)
-
-if st.button("Du-mă la Etichete"):
-    st.switch_page("pages/etichete.py")
-
+with col8:
+    st.markdown('<div class="tile"><h3>🛡️ Vault Clienți</h3><p>Setări, Baze Date, Backup</p></div>', unsafe_allow_html=True)
+    st.button("În Construcție 🚧", use_container_width=True, disabled=True, key="vault")
