@@ -113,7 +113,13 @@ def render_manager_dashboard():
             barmode='group' 
         )
         fig_luni.update_traces(textposition='outside')
-        fig_luni.update_layout(bargap=0.4, xaxis_title="Lună", yaxis_title="Număr Paleți Livrați")
+        fig_luni.update_layout(
+            xaxis_title="Lună", 
+            yaxis_title="Număr Paleți Livrați",
+            bargap=0.2, # Distanța între grupuri
+            bargroupgap=0.1 # Distanța între barele din același grup
+        )
+        fig_luni.update_traces(textposition='outside', maxoutput=1, marker_line_width=1.5, width=0.3) # FORTARE LĂȚIME BARĂ (0.3)
         st.plotly_chart(fig_luni, use_container_width=True)
 
         st.divider()
@@ -129,7 +135,11 @@ def render_manager_dashboard():
             title="Distribuția volumelor per client"
         )
         fig_top.update_traces(textposition='outside')
-        fig_top.update_layout(bargap=0.4, xaxis_title="Client", yaxis_title="Volum Total (Paleți)")
+        fig_top.update_layout(
+            xaxis_title="Client", 
+            yaxis_title="Volum Total (Paleți)"
+        )
+        fig_top.update_traces(textposition='outside', marker_line_width=1.5, width=0.4) # FORTARE LĂȚIME BARĂ (0.4)
         st.plotly_chart(fig_top, use_container_width=True)
 
         st.divider()
@@ -146,5 +156,10 @@ def render_manager_dashboard():
                 title="Livrări la nivel de zi (Achitat / Restanțe)"
             )
             fig_detaliu.update_traces(textposition='outside', width=0.4)
-            fig_detaliu.update_layout(xaxis_type='category', bargap=0.4)
+            fig_detaliu.update_layout(
+            xaxis_type='category', 
+            xaxis_title="Dată Livrare", 
+            yaxis_title="Număr Paleți"
+        )
+        fig_detaliu.update_traces(textposition='outside', marker_line_width=1.5, width=0.3) # FORTARE LĂȚIME BARĂ (0.3)
             st.plotly_chart(fig_detaliu, use_container_width=True)
