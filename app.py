@@ -123,7 +123,7 @@ elif st.session_state.current_module == 'Lansare':
 
 elif st.session_state.current_module == 'Manager':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    render_manager_dashboard()
+    render_manager_dashboard()  # <--- ASTA ERA BLOCATĂ! Acum va aduce toate graficele!
 
 elif st.session_state.current_module == 'Email':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
