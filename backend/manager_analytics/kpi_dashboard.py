@@ -100,9 +100,7 @@ def render_manager_dashboard():
         with col_m2: analiza_produs = st.selectbox("Selectează Produs pt. Analiză:", list(st.session_state.db.keys()), key="mgr_prod_an")
         
         st.divider()
-        df_total_produs = st.session_state.db[analiza_produs]["livrari_totale"]
-        # AICI E SECRETUL: Filtrăm forțat absolut totul doar pentru clientul ales de tine în stânga!
-        df_toate = df_total_produs[df_total_produs['Client'] == analiza_client]
+        df_toate = st.session_state.db[analiza_produs]["livrari_totale"]
         color_discrete_map = {'Achitat': '#28a745', 'În termen': '#17a2b8', 'Restanță': '#dc3545'}
         
         df_toate['Data_Obj'] = pd.to_datetime(df_toate['Data'], format='%d-%m-%Y')
