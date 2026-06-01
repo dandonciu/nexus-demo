@@ -3,6 +3,7 @@ from backend.database.clients_config import init_db
 from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
 from backend.incoming_orders.email_parser import render_email_parser_module
 from backend.services.order_orchestrator import render_lansare_module
+from backend.services.etichete import render_etichete_module
 
 st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
 
@@ -148,21 +149,4 @@ elif st.session_state.current_module == 'SmartBill':
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     st.title("🎨 Studio Etichete AI")
-    st.info("Fluxul de generare / modificare a etichetelor:\n\nEticheta originală (pdf) -> Drag&Drop/Upload + Prompt -> Trimite -> Pdf modificat -> Download (pdf).")
-    
-    st.divider()
-    
-    st.success("""
-    **Exemplu de prompt:**
-    
-    La imaginea atașată te rog să faci următoarele modificări: 
-    - Să ștergi logo-ul de sus: wipe it clean / Xxwoven 
-    - Pentru a echilibra imaginea mută mai sus textul: XTRA PRECISION XP50 și rîndul de sub el
-    - Înlocuiește la ”Packing: 50 sheets” 50 cu 90. Vom avea: ”Packing: 90 sheets”
-    - Înlocuiește culoarea roșie la dunga roșie oblică din stînga-sus cu negru. (Deci negru în loc de roșu)
-    - Înlocuiește culoarea roșie la triunghiul din stînga-jos cu culoare negru. (Deci negru în loc de roșu)
-    - Înlocuiește codul de bare din imagine cu codul de bare din a doua imagine atașată.   
-    
-    *Img1_eticheta.pdf*  
-    *Img2_Cod_de_bare.pdf*
-    """)
+
