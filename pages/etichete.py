@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Studio Etichete AI", page_icon="🏷️", layout="wide")
 
-st.title("🏷️ Studio Etichete AI (Grand Prix)")
+st.title("🏷️ Studio Etichete AI")
 st.markdown("Procesare grafică automatizată pentru etichete via OpenAI.")
 st.divider()
 
