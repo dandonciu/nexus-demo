@@ -106,78 +106,67 @@ def render_manager_dashboard():
         df_toate['Data_Obj'] = pd.to_datetime(df_toate['Data'], format='%d-%m-%Y')
         df_toate['Luna'] = df_toate['Data_Obj'].dt.strftime('%b %Y')
         
-            # 1. GRAFIC LUNI - 12 LUNI VIZIBILE
-    st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}** (Toți Clienții)")
-    df_luni = df_toate.groupby(['Luna', 'Status_Plata'])['Volum_Paleti'].sum().reset_index()
+            # 1. GRAFIC LUNI - FILTRAT PE CLIENT + 12 LUNI VIZIBILE
+    st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}** → Client: **{analiza_client}**")
     
-    # Ordonăm corect lunile
-    df_luni['Data_Obj'] = pd.to_datetime(df_luni['Luna'] + ' 01', format='%b %Y %d')
-    df_luni = df_luni.sort_values('Data_Obj')
+    # FILTRARE dupa clientul selectat
+    df_filtrat_client = df_toate[df_toate['Client'] == analiza_client]
     
-    fig_luni = px.bar(
-        df_luni, x='Luna', y='Volum_Paleti', color='Status_Plata',
-        text='Volum_Paleti', color_discrete_map=color_discrete_map,
-        title=f"Sinteză Lunară (12 luni) - {analiza_produs}",
-        barmode='group',
-        hover_data={
-            'Luna': True,
-            'Status_Plata': True,
-            'Volum_Paleti': ':.0f paleți',
-            'Data_Obj': False
-        }
-    )
-    fig_luni.update_layout(
-        xaxis_type='category', 
-        xaxis_title="Lună", 
-        yaxis_title="Număr Paleți Livrați", 
-        bargap=0.15,  # Mai puțin spațiu între bare
-        xaxis={'tickangle': -45},  # Rotim etichetele
-        height=500,
-        hovermode='x unified'
-    )
-    fig_luni.update_traces(textposition='outside', textfont_size=9)
-    st.plotly_chart(fig_luni, use_container_width=True)
+    if df_filtrat_client.empty:
+        st.warning(f"Nu există livrări pentru {analiza_produs} către {analiza_client}")
+    else:
+        df_luni = df_filtrat_client.groupby(['Luna', 'Status_Plata'])['Volum_Paleti'].sum().reset_index()
+        
+        fig_luni = px.bar(
+            df_luni, x='Luna', y='Volum_Paleti', color='Status_Plata',
+            text='Volum_Paleti', color_discrete_map=color_discrete_map,
+            title=f"Livrări Lunare - {analiza_client}",
+            barmode='group',
+            hover_data={'Luna': True, 'Status_Plata': True, 'Volum_Paleti': ':.0f paleți'}
+        )
+        fig_luni.update_layout(
+            xaxis_type='category', 
+            xaxis_title="Lună", 
+            yaxis_title="Număr Paleți Livrați", 
+            bargap=0.2,  # Mai puțin spațiu între bare
+            xaxis={'tickangle': -45},
+            height=450,
+            hovermode='x',  # Fără linie verticală punctată
+            showlegend=True
+        )
+        fig_luni.update_traces(textposition='outside', textfont_size=8)
+        st.plotly_chart(fig_luni, use_container_width=True)
 
     st.divider()
 
-    # 2. GRAFIC TOP CLIENȚI - SCALĂ AJUSTATĂ
-    st.markdown(f"#### 🏆 Top Clienți după Volum: **{analiza_produs}**")
+    # 2. GRAFIC TOP CLIENȚI - RĂMÂNE NEMODIFICAT (arată toți clienții)
+    st.markdown(f"#### 🏆 Top Clienți după Volum: **{analiza_produs}** (Toți Clienții)")
     df_top = df_toate.groupby(['Client'])['Volum_Paleti'].sum().reset_index()
     df_top = df_top.sort_values(by='Volum_Paleti', ascending=False)
     
-    # Calculăm procentaj pentru hover
-    total_vol = df_top['Volum_Paleti'].sum()
-    df_top['Procent'] = (df_top['Volum_Paleti'] / total_vol * 100).round(1)
-    
     fig_top = px.bar(
-        df_top, x='Client', y='Volum_Paleti',
-        text='Volum_Paleti', 
-        color='Volum_Paleti', 
+         df_top, x='Client', y='Volum_Paleti',
+        text='Volum_Paleti', color='Volum_Paleti', 
         color_continuous_scale='Blues',
-        title=f"Distribuția volumelor per client (Total: {total_vol:.0f} paleți)",
-        hover_data={
-            'Client': True,
-            'Volum_Paleti': ':.0f paleți',
-            'Procent': ':.1f%'
-        }
+        title="Distribuția volumelor per client",
+        hover_data={'Client': True, 'Volum_Paleti': ':.0f paleți'}
     )
     fig_top.update_layout(
         xaxis_type='category', 
         xaxis_title="Client", 
         yaxis_title="Volum Total (Paleți)", 
         bargap=0.4,
-        xaxis={'tickangle': -45},  # Rotim etichetele
-        height=450,
-        yaxis={'range': [0, df_top['Volum_Paleti'].max() * 1.1]}  # Scală optimizată
+        xaxis={'tickangle': -45},
+        height=400,
+        hovermode='x'  # Fără linie verticală
     )
-    fig_top.update_traces(textposition='outside', textfont_size=9)
+    fig_top.update_traces(textposition='outside', textfont_size=8)
     st.plotly_chart(fig_top, use_container_width=True)
 
     st.divider()
 
-    # 3. GRAFIC ISTORIC - HOVER ÎMBUNĂTĂȚIT
-    st.markdown(f"#### 🔎 Istoric Detaliat pentru: **{analiza_client}**")
-    df_filtrat = df_toate[df_toate['Client'] == analiza_client]
+    # 3. GRAFIC ISTORIC DETALIAT - FILTRAT PE CLIENT
+    st.markdown(f"#### 🔎 Istoric Detaliat pentru: **{analiza_client}** → **{analiza_produs}**")
     
     if df_filtrat.empty:
         st.warning(f"Nu există date de livrare pentru {analiza_produs} către {analiza_client}.")
@@ -185,13 +174,9 @@ def render_manager_dashboard():
         fig_detaliu = px.bar(
             df_filtrat, x='Data', y='Volum_Paleti', color='Status_Plata',
             text='Volum_Paleti', color_discrete_map=color_discrete_map,
-            title=f"Livrări la nivel de zi (Achitat / Restanțe)",
-            hover_data={
-                'Data': True,
-                'Volum_Paleti': ':.0f paleți',
-                'Status_Plata': True,
-                'Client': True
-            }
+            title=f"Livrări la nivel de zi - {analiza_client}",
+            hover_data={'Data': True, 'Volum_Paleti': ':.0f paleți', 'Status_Plata': True},
+            hovermode='x'  # Fără linie verticală punctată
         )
         fig_detaliu.update_layout(
             xaxis_type='category', 
@@ -199,8 +184,7 @@ def render_manager_dashboard():
             yaxis_title="Număr Paleți", 
             bargap=0.3,
             xaxis={'tickangle': -45},
-            height=450,
-            hovermode='x unified'
+            height=400
         )
-        fig_detaliu.update_traces(textposition='outside', textfont_size=8)
+        fig_detaliu.update_traces(textposition='outside', textfont_size=7)
         st.plotly_chart(fig_detaliu, use_container_width=True)
