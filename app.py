@@ -1,15 +1,15 @@
 import streamlit as st
-# from backend.database.clients_config import init_db
-# from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
-# from backend.incoming_orders.email_parser import render_email_parser_module
-# from backend.services.order_orchestrator import render_lansare_module
+from backend.database.clients_config import init_db
+from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
+from backend.incoming_orders.email_parser import render_email_parser_module
+from backend.services.order_orchestrator import render_lansare_module
 
 st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
 
 # ==========================================
 # INIȚIALIZARE STĂRI GLOBALE
 # ==========================================
-# if 'db' not in st.session_state: st.session_state.db = init_db()
+if 'db' not in st.session_state: st.session_state.db = init_db()
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'role' not in st.session_state: st.session_state.role = None
 if 'current_module' not in st.session_state: st.session_state.current_module = 'Home'
@@ -110,26 +110,22 @@ if st.session_state.current_module == 'Home':
 
     with col8:
         st.markdown('<div class="tile"><h3>🛡️ Vault Clienți</h3><p>Setări, Baze Date, Backup</p></div>', unsafe_allow_html=True)
-        # Lăsăm Vault-ul dezactivat (cum îl aveai tu) doar pentru că e în construcție
         st.button("În Construcție 🚧", use_container_width=True, disabled=True, key="vault")
 
 # ==========================================
-# RUTAREA CĂTRE MODULE (SISTEMUL TĂU VECHI ȘI BUN)
+# RUTAREA CĂTRE MODULE
 # ==========================================
 elif st.session_state.current_module == 'Lansare':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    # render_lansare_module()
-    st.info("Aici se încarcă modulul Lansare")
+    render_lansare_module()
 
 elif st.session_state.current_module == 'Manager':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    # render_manager_dashboard()
-    st.info("Aici se încarcă Manager Analytics")
+    render_manager_dashboard()
 
 elif st.session_state.current_module == 'Email':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    # render_email_parser_module()
-    st.info("Aici se încarcă Inbox Auto-Procesare")
+    render_email_parser_module()
 
 elif st.session_state.current_module == 'Receptie':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
@@ -148,26 +144,7 @@ elif st.session_state.current_module == 'SmartBill':
     c1.button("Ramura A: Facturare & Gestiune", use_container_width=True)
     c2.button("Ramura B: Contabilitate & Încasări", use_container_width=True)
 
-# AICI ESTE MODULUL DE ETICHETE NOU - EXACT CUM AI CERUT
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    
     st.title("🎨 Studio Etichete AI")
-    st.info("Fluxul de generare / modificare a etichetelor:\n\nEticheta originală (pdf) -> Drag&Drop/Upload + Prompt (modificări ce/cum vrem) -> Trimite -> Pdf modificat -> Download (pdf).")
-    
-    st.divider()
-    
-    st.success("""
-    **Exemplu de prompt:**
-    
-    La imaginea atașată te rog să faci următoarele modificări: 
-    - Să ștergi logo-ul de sus: wipe it clean / Xxwoven 
-    - Pentru a echilibra imaginea mută mai sus textul: XTRA PRECISION XP50 și rîndul de sub el
-    - Înlocuiește la ”Packing: 50 sheets” 50 cu 90. Vom avea: ”Packing: 90 sheets”
-    - Înlocuiește culoarea roșie la dunga roșie oblică din stînga-sus cu negru. (Deci negru în loc de roșu)
-    - Înlocuiește culoarea roșie la triunghiul din stînga-jos cu culoare negru. (Deci negru în loc de roșu)
-    - Înlocuiește codul de bare din imagine cu codul de bare din a doua imagine atașată.   
-    
-    *Img1_eticheta.pdf*  
-    *Img2_Cod_de_bare.pdf*
-    """)
+    st.info("Fluxul de generare / modificare a etichetelor:\n\nEticheta originală (pdf) -> Drag&Drop/Upload + Prompt -> Trimite -> Pdf modificat -> Download (pdf).")
