@@ -109,12 +109,12 @@ def render_manager_dashboard():
         df_top = df_toate.groupby("Client")["Volum_Paleti"].sum().reset_index().sort_values("Volum_Paleti", ascending=False)
         
         fig_top = px.bar(df_top, x="Client", y="Volum_Paleti", 
-                 color_discrete_sequence=["#00ADB5"],  # Culoare fixă, 100% vizibilă pe dark
-                 title="Top Clienți (Total)")
+            color_discrete_sequence=["#00ADB5"],  # Culoare fixă, 100% vizibilă pe dark
+            title="Top Clienți (Total)")
         fig_top.update_traces(marker_line_color='white', marker_line_width=1.5)  # Contur clar
         fig_top.update_layout(hovermode='closest', xaxis_tickangle=-45, bargap=0.3, height=350)
         fig_top.update_traces(hovertemplate="<b>%{y:.0f}</b> paleți<extra></extra>",
-                    hoverlabel=dict(bgcolor="#1E1E2E", font_color="white", bordercolor="#00ADB5"))
+            hoverlabel=dict(bgcolor="#1E1E2E", font_color="white", bordercolor="#00ADB5"))
 
         st.divider()
 
