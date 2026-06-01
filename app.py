@@ -89,6 +89,7 @@ if st.session_state.current_module == 'Home':
             st.session_state.current_module = 'SmartBill'; st.rerun()
 
     st.markdown("<br>#### 🛠️ Instrumente, AI & Analiză", unsafe_allow_html=True)
+
     col5, col6, col7, col8 = st.columns(4)
 
     with col5:
@@ -96,16 +97,16 @@ if st.session_state.current_module == 'Home':
         if st.button("Verifică Inbox", use_container_width=True):
             st.session_state.current_module = 'Email'; st.rerun()
 
-   with col6:
+    with col6:
         st.markdown('<div class="tile"><h3>🎨 Studio Etichete AI</h3><p>Editare PDF/JPG cu AI</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Studio", use_container_width=True):
-            st.switch_page("pages/etichete.py")  # Asta te va trimite direct în noul tău fișier!
-            
+            st.switch_page("pages/etichete.py")
+
     with col7:
         st.markdown('<div class="tile"><h3>📊 Manager Analytics</h3><p>KPIs & Istoric Livrări</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Dashboard", use_container_width=True):
-        if st.session_state.role == "manager":
-            st.session_state.current_module = 'Manager'; st.rerun()
+            if st.session_state.role == "manager":
+                st.session_state.current_module = 'Manager'; st.rerun()
             else: st.error("⛔ Interzis. Doar Manager.")
 
     with col8:
