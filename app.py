@@ -148,5 +148,4 @@ elif st.session_state.current_module == 'SmartBill':
 
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("🎨 Studio Etichete AI")
-
+    render_etichete_module()  # 👈 ASTA E CHEIA! Asta aduce automat tot codul din fișierul tău etichete.py
