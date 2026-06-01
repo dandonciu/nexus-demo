@@ -103,21 +103,35 @@ def render_manager_dashboard():
         df_toate['Data_Obj'] = pd.to_datetime(df_toate['Data'], format='%d-%m-%Y')
         df_toate['Luna'] = df_toate['Data_Obj'].dt.strftime('%b %Y')
         
-        # 1. GRAFIC: EVOLUȚIE LUNARĂ
+       # 1. GRAFIC: EVOLUȚIE LUNARĂ
         st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}**")
-        df_luni = df_toate.groupby(['Luna', 'Status_Plata'])['Volum_Paleti'].sum().reset_index()
+        
+        # AICI E SECRETUL: Nu mai transformăm în text (%b), păstrăm obiectul DateTime pe prima zi a lunii!
+        df_toate['Luna_Data'] = df_toate['Data_Obj'].dt.to_period('M').dt.to_timestamp()
+        
+        df_luni = df_toate.groupby(['Luna_Data', 'Status_Plata'])['Volum_Paleti'].sum().reset_index()
         
         fig_luni = px.bar(
-            df_luni, x='Luna', y='Volum_Paleti', color='Status_Plata',
+            df_luni, x='Luna_Data', y='Volum_Paleti', color='Status_Plata',
             text='Volum_Paleti', color_discrete_map=color_discrete_map,
             title="Sinteză Lunară (Bază de date Oracle)",
             barmode='group' 
         )
-        fig_luni.update_layout(xaxis_title="Lună", yaxis_title="Număr Paleți Livrați", bargap=0.2, bargroupgap=0.1)
-        fig_luni.update_traces(textposition='outside', width=0.3)
+        
+        # AICI ÎL OBLIGĂM SĂ ARATE LUNILE CLAR PE AXA X (Format: Jan-2024, Feb-2024 etc)
+        fig_luni.update_layout(
+            xaxis=dict(
+                tickformat="%b\n%Y",
+                dtick="M1", # Un "tick" pe lună, obligatoriu
+                title="Lună"
+            ),
+            yaxis_title="Număr Paleți Livrați",
+            bargap=0.2, 
+            bargroupgap=0.1
+        )
+        
+        fig_luni.update_traces(textposition='outside', width=1000 * 3600 * 24 * 10) # 10 zile lățime în milisecunde
         st.plotly_chart(fig_luni, use_container_width=True)
-
-        st.divider()
 
         # 2. GRAFIC: TOP CLIENȚI
         st.markdown(f"#### 🏆 Top Clienți după Volum: **{analiza_produs}**")
