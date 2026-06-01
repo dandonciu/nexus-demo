@@ -145,4 +145,5 @@ elif st.session_state.current_module == 'SmartBill':
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     st.title("🎨 Studio Etichete AI")
-    st.info("Aici vom implementa zona de Drag & Drop PDF -> Conversie JPG -> AI Prompt -> Return PDF.")
+    st.info("Aici vom implementa zona de Drag & Drop PDF -> Conversie JPG -> AI Prompt -> Return PDF.--- Fluxul Ai de generare/modificare a etichetelor:
+Eticheta originală (pdf) --> Drag&Drop + Prompt (modificări ce/cum vreau)--> Trimite --> Pdf modificat--> Download.")
