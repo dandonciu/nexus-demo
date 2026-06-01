@@ -4,7 +4,6 @@ import plotly.express as px
 import math
 
 def init_mock_data():
-    # Inițializăm datele doar dacă nu există deja, ca să meargă graficele perfect
     if 'istoric_comenzi_live' not in st.session_state:
         st.session_state.istoric_comenzi_live = []
         
@@ -17,14 +16,16 @@ def init_mock_data():
                 "livrari_totale": pd.DataFrame({
                     "Client": [
                         "🏢 [HQ] SC CORPORATIA ALPHA SRL", " ├─ Filiala București Nord", " ├─ Filiala Cluj", "🏢 [HQ] BETA DISTRIBUTION",
+                        "🏢 [HQ] SC CORPORATIA ALPHA SRL", " ├─ Filiala București Nord", " ├─ Filiala Cluj", "🏢 [HQ] BETA DISTRIBUTION",
                         "🏢 [HQ] SC CORPORATIA ALPHA SRL", " ├─ Filiala București Nord", " ├─ Filiala Cluj", "🏢 [HQ] BETA DISTRIBUTION"
                     ],
                     "Data": [
                         "10-01-2024", "12-01-2024", "05-01-2024", "08-01-2024",
-                        "15-02-2024", "18-02-2024", "10-02-2024", "20-02-2024"
+                        "15-02-2024", "18-02-2024", "10-02-2024", "20-02-2024",
+                        "05-03-2024", "10-03-2024", "15-03-2024", "22-03-2024"
                     ],
-                    "Volum_Paleti": [12, 5, 4, 20, 15, 8, 6, 25],
-                    "Status_Plata": ["Achitat", "Achitat", "Achitat", "Achitat", "În termen", "Achitat", "Restanță", "În termen"]
+                    "Volum_Paleti": [12, 5, 4, 20, 15, 8, 6, 25, 10, 4, 8, 18],
+                    "Status_Plata": ["Achitat", "Achitat", "Achitat", "Achitat", "Achitat", "Achitat", "Restanță", "În termen", "În termen", "Restanță", "Achitat", "În termen"]
                 })
             },
             "Lavete Craft Puromore Blue": {
@@ -97,62 +98,4 @@ def render_manager_dashboard():
     # ==========================================
     # SECȚIUNEA B: PRIVIRE DE ANSAMBLU (GRAFICE)
     # ==========================================
-    with tab_an:
-        col_m1, col_m2 = st.columns([2, 2])
-        with col_m1: analiza_client = st.selectbox("Selectează Client / Filială:", clients_mock)
-        with col_m2: analiza_produs = st.selectbox("Selectează Produs pt. Analiză:", list(st.session_state.db.keys()), key="mgr_prod_an")
-        
-        st.divider()
-        df_toate = st.session_state.db[analiza_produs]["livrari_totale"]
-        color_discrete_map = {'Achitat': '#28a745', 'În termen': '#17a2b8', 'Restanță': '#dc3545'}
-        
-        # Extragem și ordonăm lunile corect
-        df_toate['Data_Obj'] = pd.to_datetime(df_toate['Data'], format='%d-%m-%Y')
-        df_toate['Luna'] = df_toate['Data_Obj'].dt.strftime('%b %Y') # Ex: Jan 2024
-        
-        # 1. GRAFIC: EVOLUȚIE LUNARĂ (COLOANE MULTIPLE)
-        st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}** (Toți Clienții)")
-        df_luni = df_toate.groupby(['Luna', 'Status_Plata'])['Volum_Paleti'].sum().reset_index()
-        
-        fig_luni = px.bar(
-            df_luni, x='Luna', y='Volum_Paleti', color='Status_Plata',
-            text='Volum_Paleti', color_discrete_map=color_discrete_map,
-            title="Sinteză Lunară (Bază de date Oracle)",
-            barmode='group' # Coloanele stau una lângă alta
-        )
-        fig_luni.update_traces(textposition='outside')
-        st.plotly_chart(fig_luni, use_container_width=True)
-
-        st.divider()
-
-        # 2. GRAFIC: TOP CLIENȚI
-        st.markdown(f"#### 🏆 Top Clienți după Volum: **{analiza_produs}**")
-        df_top = df_toate.groupby(['Client'])['Volum_Paleti'].sum().reset_index()
-        df_top = df_top.sort_values(by='Volum_Paleti', ascending=False)
-        
-        fig_top = px.bar(
-            df_top, x='Client', y='Volum_Paleti',
-            text='Volum_Paleti', color='Volum_Paleti', 
-            color_continuous_scale='Blues',
-            title="Distribuția volumelor per client"
-        )
-        fig_top.update_traces(textposition='outside')
-        st.plotly_chart(fig_top, use_container_width=True)
-
-        st.divider()
-
-        # 3. GRAFIC & DETALII: ISTORIC CLIENT SPECIFIC
-        st.markdown(f"#### 🔎 Istoric Detaliat pentru: **{analiza_client}**")
-        df_filtrat = df_toate[df_toate['Client'] == analiza_client]
-        
-        if df_filtrat.empty:
-            st.warning(f"Nu există date de livrare pentru {analiza_produs} către {analiza_client}.")
-        else:
-            fig_detaliu = px.bar(
-                df_filtrat, x='Data', y='Volum_Paleti', color='Status_Plata',
-                text='Volum_Paleti', color_discrete_map=color_discrete_map,
-                title="Livrări la nivel de zi"
-            )
-            fig_detaliu.update_traces(textposition='outside', width=0.4)
-            fig_detaliu.update_layout(xaxis_type='category')
-            st.plotly_chart(fig_detaliu, use_container_width=True)
+    with tab_a
