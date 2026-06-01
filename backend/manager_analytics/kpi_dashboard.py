@@ -103,7 +103,8 @@ def render_manager_dashboard():
         df_toate['Data_Obj'] = pd.to_datetime(df_toate['Data'], format='%d-%m-%Y')
         df_toate['Luna'] = df_toate['Data_Obj'].dt.strftime('%b %Y')
         
-        st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}** (Toți Clienții)")
+        # 1. GRAFIC: EVOLUȚIE LUNARĂ
+        st.markdown(f"#### 📆 Volum Livrări pe Luni: **{analiza_produs}**")
         df_luni = df_toate.groupby(['Luna', 'Status_Plata'])['Volum_Paleti'].sum().reset_index()
         
         fig_luni = px.bar(
@@ -112,18 +113,13 @@ def render_manager_dashboard():
             title="Sinteză Lunară (Bază de date Oracle)",
             barmode='group' 
         )
-        fig_luni.update_traces(textposition='outside')
-        fig_luni.update_layout(
-            xaxis_title="Lună", 
-            yaxis_title="Număr Paleți Livrați",
-            bargap=0.2, # Distanța între grupuri
-            bargroupgap=0.1 # Distanța între barele din același grup
-        )
-        fig_luni.update_traces(textposition='outside', maxoutput=1, marker_line_width=1.5, width=0.3) # FORTARE LĂȚIME BARĂ (0.3)
+        fig_luni.update_layout(xaxis_title="Lună", yaxis_title="Număr Paleți Livrați", bargap=0.2, bargroupgap=0.1)
+        fig_luni.update_traces(textposition='outside', width=0.3)
         st.plotly_chart(fig_luni, use_container_width=True)
 
         st.divider()
 
+        # 2. GRAFIC: TOP CLIENȚI
         st.markdown(f"#### 🏆 Top Clienți după Volum: **{analiza_produs}**")
         df_top = df_toate.groupby(['Client'])['Volum_Paleti'].sum().reset_index()
         df_top = df_top.sort_values(by='Volum_Paleti', ascending=False)
@@ -134,16 +130,13 @@ def render_manager_dashboard():
             color_continuous_scale='Blues',
             title="Distribuția volumelor per client"
         )
-        fig_top.update_traces(textposition='outside')
-        fig_top.update_layout(
-            xaxis_title="Client", 
-            yaxis_title="Volum Total (Paleți)"
-        )
-        fig_top.update_traces(textposition='outside', marker_line_width=1.5, width=0.4) # FORTARE LĂȚIME BARĂ (0.4)
+        fig_top.update_layout(xaxis_title="Client", yaxis_title="Volum Total (Paleți)")
+        fig_top.update_traces(textposition='outside', width=0.4)
         st.plotly_chart(fig_top, use_container_width=True)
 
         st.divider()
 
+        # 3. GRAFIC: ISTORIC CLIENT
         st.markdown(f"#### 🔎 Istoric Detaliat pentru: **{analiza_client}**")
         df_filtrat = df_toate[df_toate['Client'] == analiza_client]
         
@@ -155,11 +148,6 @@ def render_manager_dashboard():
                 text='Volum_Paleti', color_discrete_map=color_discrete_map,
                 title="Livrări la nivel de zi (Achitat / Restanțe)"
             )
-            fig_detaliu.update_traces(textposition='outside', width=0.4)
-            fig_detaliu.update_layout(
-            xaxis_type='category', 
-            xaxis_title="Dată Livrare", 
-            yaxis_title="Număr Paleți"
-        )
-        fig_detaliu.update_traces(textposition='outside', marker_line_width=1.5, width=0.3) # FORTARE LĂȚIME BARĂ (0.3)
+            fig_detaliu.update_layout(xaxis_type='category', xaxis_title="Dată Livrare", yaxis_title="Număr Paleți")
+            fig_detaliu.update_traces(textposition='outside', width=0.3)
             st.plotly_chart(fig_detaliu, use_container_width=True)
