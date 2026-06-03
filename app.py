@@ -47,27 +47,26 @@ if not st.session_state.logged_in:
             st.stop()
     
     # Altfel, afișează formularul de parolă
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        with st.form("login_form"):
-            pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
-        if st.form_submit_button("Autentificare", use_container_width=True):
-               
-        if pwd in ["angajat", "manager", "admin"]:
-    # DEBUG - resetează PIN-urile (șterge această linie după ce funcționează)
-
-        if pwd == "admin":
-            from backend.auth.pin_auth import force_update_pins
-        force_update_pins()
-    st.info("PIN-uri resetate la noile valori!")
+   
+with st.form("login_form"):
+    pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
+    submitted = st.form_submit_button("Autentificare", use_container_width=True)
     
-    st.session_state.awaiting_2fa = True
-    st.session_state.pending_2fa_user = pwd
-    st.session_state.pending_2fa_role = pwd
-    st.rerun()    
-                else:
-                    st.error("Acces Respins!")
-    st.stop()
+    if submitted:
+        if pwd in ["angajat", "manager", "admin"]:
+            # DEBUG - resetează PIN-urile (șterge după ce funcționează)
+            if pwd == "admin":
+                from backend.auth.pin_auth import force_update_pins
+                force_update_pins()
+                st.info("PIN-uri resetate la noile valori!")
+            
+            st.session_state.awaiting_2fa = True
+            st.session_state.pending_2fa_user = pwd
+            st.session_state.pending_2fa_role = pwd
+            st.rerun()
+        else:
+            st.error("Acces Respins!")
+
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
 # Aici vine dashboard-ul tău, modulele, etc.
