@@ -13,16 +13,7 @@ PIN_FILE = Path(__file__).parent / "pins.json"
 LOGIN_ATTEMPTS_KEY = "pin_failed_attempts"
 BLOCK_DURATION_MINUTES = 30
 MAX_ATTEMPTS = 3
-#========================================
-def force_reset_pins():
-    """Resetează PIN-urile la valorile implicite"""
-    default_pins = {
-        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
-        "manager": hashlib.sha256("222222".encode()).hexdigest(),
-        "admin": hashlib.sha256("333333".encode()).hexdigest()
-    }
-    save_pins(default_pins)
-    st.success("PIN-uri resetate! Acum folosește: angajat=111111, manager=222222, admin=333333")
+
 # ========== INCARCA PIN-URILE ==========
 def load_pins():
     if not PIN_FILE.exists():
