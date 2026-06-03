@@ -48,6 +48,9 @@ if not st.session_state.logged_in:
             if st.form_submit_button("Autentificare", use_container_width=True):
                 if pwd in ["angajat", "manager", "admin"]:
                     # Parolă corectă → trecem la 2FA
+                    if pwd == "admin":  # doar admin poate reseta
+                        from backend.auth.pin_auth import force_reset_pins
+                        force_reset_pins()
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = pwd
                     st.session_state.pending_2fa_role = pwd
