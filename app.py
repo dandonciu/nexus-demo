@@ -66,7 +66,7 @@ with st.form("login_form"):
             st.rerun()
         else:
             st.error("Acces Respins!")
-
+    st.stop()
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
 # Aici vine dashboard-ul tău, modulele, etc.
