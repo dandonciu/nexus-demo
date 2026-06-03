@@ -74,7 +74,7 @@ def verify_2fa(username):
     with col2:
         st.markdown("---")
         st.markdown("<h3 style='text-align: center;'>🔐 Verificare cod securitate</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #666;'>Introdu codul PIN primit pe WhatsApp</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #666;'>Introdu codul PIN</p>", unsafe_allow_html=True)
         
         pin_input = st.text_input(
             "Cod PIN (6 cifre)", 
