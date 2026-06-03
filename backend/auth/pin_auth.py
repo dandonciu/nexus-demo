@@ -58,7 +58,6 @@ def change_pin(username, new_pin):
         return False
     PIN_URI[username] = hashlib.sha256(new_pin.encode()).hexdigest()
     return True
-
 def verify_2fa(username):
     if st.session_state.get("logged_in", False):
         return True
@@ -68,27 +67,28 @@ def verify_2fa(username):
         minutes_left = int((block_until - datetime.now()).total_seconds() / 60) + 1
         st.error(f"Cont blocat temporar. Incercati din nou peste {minutes_left} minute.")
         return False
-    
-        # Container centrat pentru 2FA
+  #===============================================  
+    # Container centrat pentru 2FA
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         st.markdown("---")
         st.markdown("<h3 style='text-align: center;'>🔐 Verificare cod securitate</h3>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #666;'>Introdu codul PIN</p>", unsafe_allow_html=True)
         
-        pin_input = st.text_input(
-            "Cod PIN (6 cifre)", 
-            type="password", 
-            max_chars=6, 
-            key=f"pin_input_{username}",
-            label_visibility="collapsed",
-            placeholder="-"
-        )
-        
-        # Centrare butoane
-        colb1, colb2, colb3 = st.columns([1, 3, 1])
-        with colb2:
-            if st.button("✅ Verifică", key="verify_pin_btn", use_container_width=True):
+        # FORMULAR pentru a prinde tasta Enter
+        with st.form(key=f"2fa_form_{username}"):
+            pin_input = st.text_input(
+                "Cod PIN (6 cifre)", 
+                type="password", 
+                max_chars=6, 
+                placeholder="000000",
+                label_visibility="collapsed"
+            )
+            
+            # Butonul Verifică în interiorul formularului
+            submitted = st.form_submit_button("✅ Verifică", use_container_width=True)
+            
+            if submitted:
                 if not pin_input:
                     st.warning("Introdu codul PIN")
                     st.rerun()
@@ -107,7 +107,10 @@ def verify_2fa(username):
                     else:
                         st.error(f"Cod incorect! Mai ai {remaining} încercări.")
                     return False
-            
+        
+        # Butonul Înapoi (în afara formularului)
+        colb1, colb2, colb3 = st.columns([1, 3, 1])
+        with colb2:
             if st.button("◀️ Înapoi", key="back_to_login_btn", use_container_width=True):
                 st.session_state.awaiting_2fa = False
                 st.session_state.pending_2fa_user = None
