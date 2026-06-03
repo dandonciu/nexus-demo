@@ -55,6 +55,8 @@ if not st.session_state.logged_in:
                
                 if pwd in ["angajat", "manager", "admin"]:
     # DEBUG - resetează PIN-urile (șterge această linie după ce funcționează)
+    if pwd in ["angajat", "manager", "admin"]:
+    # DEBUG - resetează PIN-urile (șterge această linie după ce funcționează)
     if pwd == "admin":
         from backend.auth.pin_auth import force_update_pins
         force_update_pins()
@@ -63,8 +65,7 @@ if not st.session_state.logged_in:
     st.session_state.awaiting_2fa = True
     st.session_state.pending_2fa_user = pwd
     st.session_state.pending_2fa_role = pwd
-    st.rerun()n_state.pending_2fa_role = pwd
-    st.rerun()
+    st.rerun()    
                 else:
                     st.error("Acces Respins!")
     st.stop()
