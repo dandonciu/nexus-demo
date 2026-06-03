@@ -69,39 +69,49 @@ def verify_2fa(username):
         st.error(f"Cont blocat temporar. Incercati din nou peste {minutes_left} minute.")
         return False
     
-    st.markdown("---")
-    st.subheader("Verificare cod securitate")
-    st.caption("Introdu codul PIN primit pe WhatsApp")
-    
-    pin_input = st.text_input("Cod PIN (6 cifre)", type="password", max_chars=6, key=f"pin_input_{username}")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Verifica", key="verify_pin_btn", use_container_width=True):
-            if not pin_input:
-                st.warning("Introdu codul PIN")
-                st.rerun()
-            if len(pin_input) != 6 or not pin_input.isdigit():
-                st.warning("PIN invalid. Trebuie sa fie exact 6 cifre.")
-                st.rerun()
-            if verify_pin(username, pin_input):
-                st.session_state[f"{LOGIN_ATTEMPTS_KEY}_{username}"] = 0
-                st.success("Cod corect!")
-                return True
-            else:
-                was_blocked = register_failed_attempt(username)
-                remaining = MAX_ATTEMPTS - st.session_state.get(f"{LOGIN_ATTEMPTS_KEY}_{username}", 1)
-                if was_blocked:
-                    st.error(f"Prea multe incercari esuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
-                else:
-                    st.error(f"Cod incorect! Mai ai {remaining} incercari.")
-                return False
-    
+        # Container centrat pentru 2FA
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("Inapoi", key="back_to_login_btn", use_container_width=True):
-            st.session_state.awaiting_2fa = False
-            st.session_state.pending_2fa_user = None
-            st.rerun()
+        st.markdown("---")
+        st.markdown("<h3 style='text-align: center;'>🔐 Verificare cod securitate</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #666;'>Introdu codul PIN primit pe WhatsApp</p>", unsafe_allow_html=True)
+        
+        pin_input = st.text_input(
+            "Cod PIN (6 cifre)", 
+            type="password", 
+            max_chars=6, 
+            key=f"pin_input_{username}",
+            label_visibility="collapsed",
+            placeholder="000000"
+        )
+        
+        # Centrare butoane
+        colb1, colb2, colb3 = st.columns([1, 1, 1])
+        with colb2:
+            if st.button("✅ Verifică", key="verify_pin_btn", use_container_width=True):
+                if not pin_input:
+                    st.warning("Introdu codul PIN")
+                    st.rerun()
+                if len(pin_input) != 6 or not pin_input.isdigit():
+                    st.warning("PIN invalid. Trebuie să fie exact 6 cifre.")
+                    st.rerun()
+                if verify_pin(username, pin_input):
+                    st.session_state[f"{LOGIN_ATTEMPTS_KEY}_{username}"] = 0
+                    st.success("Cod corect!")
+                    return True
+                else:
+                    was_blocked = register_failed_attempt(username)
+                    remaining = MAX_ATTEMPTS - st.session_state.get(f"{LOGIN_ATTEMPTS_KEY}_{username}", 1)
+                    if was_blocked:
+                        st.error(f"Prea multe încercări eșuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
+                    else:
+                        st.error(f"Cod incorect! Mai ai {remaining} încercări.")
+                    return False
+            
+            if st.button("◀️ Înapoi", key="back_to_login_btn", use_container_width=True):
+                st.session_state.awaiting_2fa = False
+                st.session_state.pending_2fa_user = None
+                st.rerun()
     
     return False
 
