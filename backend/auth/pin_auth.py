@@ -13,34 +13,16 @@ PIN_FILE = Path(__file__).parent / "pins.json"
 LOGIN_ATTEMPTS_KEY = "pin_failed_attempts"
 BLOCK_DURATION_MINUTES = 30
 MAX_ATTEMPTS = 3
-
-# ========== INCARCA PIN-URILE ==========
+#==============================
 def load_pins():
-    if not PIN_FILE.exists():
-        default_pins = {
-            "angajat": hashlib.sha256("222222".encode()).hexdigest(),
-            "manager": hashlib.sha256("222222".encode()).hexdigest(),
-            "admin": hashlib.sha256("333333".encode()).hexdigest()
-        }
-        with open(PIN_FILE, "w") as f:
-            json.dump(default_pins, f, indent=2)
-        return default_pins
-    with open(PIN_FILE, "r") as f:
-        return json.load(f)
-
-def save_pins(pins_dict):
-    with open(PIN_FILE, "w") as f:
-        json.dump(pins_dict, f, indent=2)
-
-def force_update_pins():
-    """Rescrie fisierul pins.json cu valorile din cod"""
-    new_pins = {
+    # Rescrie întotdeauna fișierul cu PIN-urile din cod
+    default_pins = {
         "angajat": hashlib.sha256("222222".encode()).hexdigest(),
         "manager": hashlib.sha256("222222".encode()).hexdigest(),
         "admin": hashlib.sha256("333333".encode()).hexdigest()
     }
-    save_pins(new_pins)
-    return new_pins
+    save_pins(default_pins)
+    return default_pins
 
 def is_blocked(username):
     if f"blocked_until_{username}" not in st.session_state:
