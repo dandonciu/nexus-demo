@@ -18,8 +18,8 @@ MAX_ATTEMPTS = 3
 def load_pins():
     if not PIN_FILE.exists():
         default_pins = {
-            "angajat": hashlib.sha256("123456".encode()).hexdigest(),
-            "manager": hashlib.sha256("111111".encode()).hexdigest(),
+            "angajat": hashlib.sha256("111111".encode()).hexdigest(),
+            "manager": hashlib.sha256("222222".encode()).hexdigest(),
             "admin": hashlib.sha256("333333".encode()).hexdigest()
         }
         with open(PIN_FILE, "w") as f:
