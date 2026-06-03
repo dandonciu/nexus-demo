@@ -32,40 +32,34 @@ if not st.session_state.logged_in:
     """, unsafe_allow_html=True)
     
     # Dacă suntem în așteptarea 2FA, afișează formularul PIN
-    if st.session_state.awaiting_2fa:
+    if st.session_state.get("awaiting_2fa", False):
         from backend.auth.pin_auth import verify_2fa
         
         if verify_2fa(st.session_state.pending_2fa_user):
-            # 2FA trecut cu succes
             st.session_state.logged_in = True
             st.session_state.role = st.session_state.pending_2fa_role
             st.session_state.awaiting_2fa = False
             st.session_state.pending_2fa_user = None
             st.rerun()
         else:
-            # verify_2fa() deja afișează eroarea și formularul
             st.stop()
     
     # Altfel, afișează formularul de parolă
-   
-with st.form("login_form"):
-    pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
-    submitted = st.form_submit_button("Autentificare", use_container_width=True)
-    
-    if submitted:
-        if pwd in ["angajat", "manager", "admin"]:
-            # DEBUG - resetează PIN-urile (șterge după ce funcționează)
-            if pwd == "admin":
-                from backend.auth.pin_auth import force_update_pins
-                force_update_pins()
-                st.info("PIN-uri resetate la noile valori!")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        with st.form("login_form"):
+            pwd = st.text_input("Parolă Acces (angajat / manager / admin)", type="password")
+            submitted = st.form_submit_button("Autentificare", use_container_width=True)
             
-            st.session_state.awaiting_2fa = True
-            st.session_state.pending_2fa_user = pwd
-            st.session_state.pending_2fa_role = pwd
-            st.rerun()
-        else:
-            st.error("Acces Respins!")
+            if submitted:
+                if pwd in ["angajat", "manager", "admin"]:
+                    st.session_state.awaiting_2fa = True
+                    st.session_state.pending_2fa_user = pwd
+                    st.session_state.pending_2fa_role = pwd
+                    st.rerun()
+                else:
+                    st.error("Acces Respins!")
+    
     st.stop()
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
