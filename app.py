@@ -51,12 +51,12 @@ if not st.session_state.logged_in:
     with col2:
         with st.form("login_form"):
             pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
-            if st.form_submit_button("Autentificare", use_container_width=True):
+        if st.form_submit_button("Autentificare", use_container_width=True):
                
-            if pwd in ["angajat", "manager", "admin"]:
+        if pwd in ["angajat", "manager", "admin"]:
     # DEBUG - resetează PIN-urile (șterge această linie după ce funcționează)
 
-            if pwd == "admin":
+        if pwd == "admin":
         from backend.auth.pin_auth import force_update_pins
         force_update_pins()
         st.info("PIN-uri resetate la noile valori!")
