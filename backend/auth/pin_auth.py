@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 # ========== CONFIGURARE ==========
 LOGIN_ATTEMPTS_KEY = "pin_failed_attempts"
-BLOCK_DURATION_MINUTES = 30
+BLOCK_DURATION_MINUTES = 15
 MAX_ATTEMPTS = 3
 
 # ========== PIN-URI DIRECT IN COD ==========
