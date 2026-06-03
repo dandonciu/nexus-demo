@@ -81,7 +81,7 @@ def verify_2fa(username):
                 "Cod PIN (6 cifre)", 
                 type="password", 
                 max_chars=6, 
-                placeholder="000000",
+                placeholder="-",
                 label_visibility="collapsed"
             )
             
