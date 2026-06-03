@@ -35,7 +35,7 @@ def save_pins(pins_dict):
 def force_update_pins():
     """Rescrie fisierul pins.json cu valorile din cod"""
     new_pins = {
-        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
+        "angajat": hashlib.sha256("222222".encode()).hexdigest(),
         "manager": hashlib.sha256("222222".encode()).hexdigest(),
         "admin": hashlib.sha256("333333".encode()).hexdigest()
     }
