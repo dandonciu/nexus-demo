@@ -82,7 +82,7 @@ def verify_2fa(username):
             max_chars=6, 
             key=f"pin_input_{username}",
             label_visibility="collapsed",
-            placeholder="000000"
+            placeholder="-"
         )
         
         # Centrare butoane
