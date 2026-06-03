@@ -13,16 +13,6 @@ PIN_FILE = Path(__file__).parent / "pins.json"
 LOGIN_ATTEMPTS_KEY = "pin_failed_attempts"
 BLOCK_DURATION_MINUTES = 30
 MAX_ATTEMPTS = 3
-#===========================
-def force_update_pins():
-    """Rescrie fișierul pins.json cu valorile din cod"""
-    new_pins = {
-        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
-        "manager": hashlib.sha256("222222".encode()).hexdigest(),
-        "admin": hashlib.sha256("333333".encode()).hexdigest()
-    }
-    save_pins(new_pins)
-    return new_pins
 
 # ========== INCARCA PIN-URILE ==========
 def load_pins():
@@ -41,6 +31,16 @@ def load_pins():
 def save_pins(pins_dict):
     with open(PIN_FILE, "w") as f:
         json.dump(pins_dict, f, indent=2)
+
+def force_update_pins():
+    """Rescrie fisierul pins.json cu valorile din cod"""
+    new_pins = {
+        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
+        "manager": hashlib.sha256("222222".encode()).hexdigest(),
+        "admin": hashlib.sha256("333333".encode()).hexdigest()
+    }
+    save_pins(new_pins)
+    return new_pins
 
 def is_blocked(username):
     if f"blocked_until_{username}" not in st.session_state:
@@ -118,10 +118,7 @@ def verify_2fa(username):
                 if was_blocked:
                     st.error(f"Prea multe incercari esuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
                 else:
-                    if remaining == 1:
-                        st.error(f"Cod incorect! Mai ai {remaining} incercare. La urmatoarea incercare esuata, accesul se va bloca pentru {BLOCK_DURATION_MINUTES} minute.")
-                    else:
-                        st.error(f"Cod incorect! Mai ai {remaining} incercari. Dupa {MAX_ATTEMPTS} incercari esuate, accesul se blocheaza {BLOCK_DURATION_MINUTES} minute.")
+                    st.error(f"Cod incorect! Mai ai {remaining} incercari.")
                 return False
     
     with col2:
