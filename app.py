@@ -11,9 +11,12 @@ if 'db' not in st.session_state: st.session_state.db = init_db()
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'role' not in st.session_state: st.session_state.role = None
 if 'current_module' not in st.session_state: st.session_state.current_module = 'Home'
+if 'awaiting_2fa' not in st.session_state: st.session_state.awaiting_2fa = False
+if 'pending_2fa_user' not in st.session_state: st.session_state.pending_2fa_user = None
 
 def go_home(): st.session_state.current_module = 'Home'
 
+# ========== LOGIN + 2FA ==========
 if not st.session_state.logged_in:
     st.markdown("""
         <div style="background: linear-gradient(90deg, #003366 0%, #004080 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 25px; text-align: center;">
@@ -21,15 +24,40 @@ if not st.session_state.logged_in:
             <p style="margin: 0; color: #a8c5e8;">Poartă Unică de Autentificare</p>
         </div>
     """, unsafe_allow_html=True)
+    
+    # Dacă suntem în așteptarea 2FA, afișează formularul PIN
+    if st.session_state.awaiting_2fa:
+        from backend.auth.pin_auth import verify_2fa
+        
+        if verify_2fa(st.session_state.pending_2fa_user):
+            # 2FA trecut cu succes
+            st.session_state.logged_in = True
+            st.session_state.role = st.session_state.pending_2fa_role
+            st.session_state.awaiting_2fa = False
+            st.session_state.pending_2fa_user = None
+            st.rerun()
+        else:
+            # verify_2fa() deja afișează eroarea și formularul
+            st.stop()
+    
+    # Altfel, afișează formularul de parolă
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         with st.form("login_form"):
-            pwd = st.text_input("Parolă Acces (angajat-no / manager)", type="password")
+            pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
             if st.form_submit_button("Autentificare", use_container_width=True):
-                if pwd in ["angajat-no", "manager-no"]:
-                    st.session_state.logged_in = True; st.session_state.role = pwd; st.rerun()
-                else: st.error("Acces Respins!")
+                if pwd in ["angajat", "manager"]:
+                    # Parolă corectă → trecem la 2FA
+                    st.session_state.awaiting_2fa = True
+                    st.session_state.pending_2fa_user = pwd
+                    st.session_state.pending_2fa_role = pwd
+                    st.rerun()
+                else:
+                    st.error("Acces Respins!")
     st.stop()
+
+# ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
+# Aici vine dashboard-ul tău, modulele, etc.
 
 st.markdown("""
 <style>
