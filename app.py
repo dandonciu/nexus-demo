@@ -1,4 +1,10 @@
 import streamlit as st
+# DEBLOCARE TEMPORARĂ - ȘTERGE DUPĂ CE TESTEZI
+from backend.auth.pin_auth import unblock_user
+unblock_user("manager")
+unblock_user("angajat")
+unblock_user("admin")
+st.success("DEBUG: Conturile au fost deblocate!")
 from backend.database.clients_config import init_db
 from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
 from backend.incoming_orders.email_parser import render_email_parser_module
