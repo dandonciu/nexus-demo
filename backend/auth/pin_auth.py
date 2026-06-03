@@ -86,7 +86,7 @@ def verify_2fa(username):
         )
         
         # Centrare butoane
-        colb1, colb2, colb3 = st.columns([1, 2, 1])
+        colb1, colb2, colb3 = st.columns([1, 1, 1])
         with colb2:
             if st.button("✅ Verifică", key="verify_pin_btn", use_container_width=True):
                 if not pin_input:
