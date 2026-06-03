@@ -150,8 +150,11 @@ def verify_2fa(username):
                 
                 if was_blocked:
                     st.error(f"🚫 Prea multe încercări eșuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
-                else:
-                    st.error(f"❌ Cod incorect! Mai ai {remaining} încercări.")
+               
+                if remaining == 1:
+                    st.error(f"❌ Cod incorect! Mai ai {remaining} încercare. La următoarea încercare eșuată, accesul se va bloca pentru {BLOCK_DURATION_MINUTES} minute.")
+            else:
+                    st.error(f"❌ Cod incorect! Mai ai {remaining} încercări. După {MAX_ATTEMPTS} încercări eșuate, accesul se blochează {BLOCK_DURATION_MINUTES} minute.")
                 
                 # TODO: Trimite către modulul tău de Audit
                 # from backend.audit import log_event
