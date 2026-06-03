@@ -35,9 +35,28 @@ def load_pins():
         with open(PIN_FILE, "w") as f:
             json.dump(default_pins, f, indent=2)
         return default_pins
+    
     with open(PIN_FILE, "r") as f:
-        return json.load(f)
-
+        pins = json.load(f)
+    
+    # Verifică dacă hash-urile sunt corecte. Dacă nu, le corectează.
+    expected = {
+        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
+        "manager": hashlib.sha256("222222".encode()).hexdigest(),
+        "admin": hashlib.sha256("333333".encode()).hexdigest()
+    }
+    
+    needs_save = False
+    for user, correct_hash in expected.items():
+        if user in pins and pins[user] != correct_hash:
+            pins[user] = correct_hash
+            needs_save = True
+    
+    if needs_save:
+        save_pins(pins)
+    
+    return pins
+==========================================
 def save_pins(pins_dict):
     with open(PIN_FILE, "w") as f:
         json.dump(pins_dict, f, indent=2)
