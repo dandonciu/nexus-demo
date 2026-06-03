@@ -141,29 +141,26 @@ def verify_2fa(username):
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✅ Verifică", key="verify_pin_btn", use_container_width=True):
-            if verify_pin(username, pin_input):
-                # PIN corect
-                st.session_state["2fa_passed"] = True
-                st.session_state["2fa_username"] = username
-                # Resetează contorul de încercări eșuate
-                st.session_state[f"{LOGIN_ATTEMPTS_KEY}_{username}"] = 0
-                st.success("✅ Cod corect!")
-                st.rerun()
-            else:
-                # PIN greșit
-                was_blocked = register_failed_attempt(username)
-                remaining = MAX_ATTEMPTS - st.session_state.get(f"{LOGIN_ATTEMPTS_KEY}_{username}", 1)
-                
-                if was_blocked:
-                    st.error(f"🚫 Prea multe încercări eșuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
-                else:
-                    st.error(f"❌ PIN incorect! Mai ai {remaining} încercări.")
-                
-                # AICI TRIMITE LA MODULUL TĂU DE AUDIT
-                # audit.log_event(username, "pin_failed", ip=st.request.client_ip)
-                
-                st.rerun()
+if st.button("✅ Verifică", key="verify_pin_btn", use_container_width=True):
+    # Validare lungime
+    if len(pin_input) != 6 or not pin_input.isdigit():
+        st.warning("⚠️ PIN invalid. Trebuie să fie exact 6 cifre.")
+        st.rerun()
+    
+    if verify_pin(username, pin_input):
+        st.session_state[f"{LOGIN_ATTEMPTS_KEY}_{username}"] = 0
+        st.success("✅ Cod corect!")
+        return True
+    else:
+        was_blocked = register_failed_attempt(username)
+        remaining = MAX_ATTEMPTS - st.session_state.get(f"{LOGIN_ATTEMPTS_KEY}_{username}", 1)
+        
+        if was_blocked:
+            st.error(f"🚫 Prea multe încercări eșuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
+        else:
+            st.error(f"❌ Cod incorect! Mai ai {remaining} încercări.")
+        
+        return False
     
     with col2:
         if st.button("◀️ Înapoi", key="back_to_login_btn", use_container_width=True):
