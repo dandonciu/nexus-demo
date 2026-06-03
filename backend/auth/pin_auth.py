@@ -18,9 +18,9 @@ MAX_ATTEMPTS = 3
 def force_reset_pins():
     """Resetează PIN-urile la valorile implicite"""
     default_pins = {
-        "angajat": hashlib.sha256("123456".encode()).hexdigest(),
-        "manager": hashlib.sha256("111111".encode()).hexdigest(),
-        "admin": hashlib.sha256("777777".encode()).hexdigest()
+        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
+        "manager": hashlib.sha256("222222".encode()).hexdigest(),
+        "admin": hashlib.sha256("333333".encode()).hexdigest()
     }
     save_pins(default_pins)
     st.success("PIN-uri resetate! Acum folosește: angajat=111111, manager=222222, admin=333333")
