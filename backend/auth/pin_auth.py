@@ -1,28 +1,24 @@
 """
 Modul 2FA simplu cu PIN fix + blocare dupa 3 incercari
+FARA fisier JSON - PIN-uri direct in cod
 """
 
 import streamlit as st
 import hashlib
-import json
 from datetime import datetime, timedelta
-from pathlib import Path
 
 # ========== CONFIGURARE ==========
-PIN_FILE = Path(__file__).parent / "pins.json"
 LOGIN_ATTEMPTS_KEY = "pin_failed_attempts"
 BLOCK_DURATION_MINUTES = 30
 MAX_ATTEMPTS = 3
-#==============================
-def load_pins():
-    # Rescrie întotdeauna fișierul cu PIN-urile din cod
-    default_pins = {
-        "angajat": hashlib.sha256("222222".encode()).hexdigest(),
-        "manager": hashlib.sha256("222222".encode()).hexdigest(),
-        "admin": hashlib.sha256("333333".encode()).hexdigest()
-    }
-    save_pins(default_pins)
-    return default_pins
+
+# ========== PIN-URI DIRECT IN COD ==========
+# Modifica aici PIN-urile pentru fiecare utilizator
+PIN_URI = {
+    "angajat": hashlib.sha256("222222".encode()).hexdigest(),
+    "manager": hashlib.sha256("222222".encode()).hexdigest(),
+    "admin": hashlib.sha256("333333".encode()).hexdigest()
+}
 
 def is_blocked(username):
     if f"blocked_until_{username}" not in st.session_state:
@@ -51,18 +47,16 @@ def unblock_user(username):
     st.session_state[f"{LOGIN_ATTEMPTS_KEY}_{username}"] = 0
 
 def verify_pin(username, pin_input):
-    pins = load_pins()
-    if username not in pins:
+    if username not in PIN_URI:
         return False
     pin_hash = hashlib.sha256(pin_input.encode()).hexdigest()
-    return pin_hash == pins[username]
+    return pin_hash == PIN_URI[username]
 
 def change_pin(username, new_pin):
-    pins = load_pins()
-    if username not in pins:
+    """Schimba PIN-ul in memorie (pierdut la restart)"""
+    if username not in PIN_URI:
         return False
-    pins[username] = hashlib.sha256(new_pin.encode()).hexdigest()
-    save_pins(pins)
+    PIN_URI[username] = hashlib.sha256(new_pin.encode()).hexdigest()
     return True
 
 def verify_2fa(username):
@@ -130,18 +124,3 @@ def admin_2fa_panel():
                     st.rerun()
         else:
             st.success("Niciun utilizator blocat")
-        st.divider()
-        st.write("Schimba cod PIN")
-        pins = load_pins()
-        users = list(pins.keys())
-        selected = st.selectbox("Utilizator", users, key="pin_user")
-        new_pin = st.text_input("PIN nou (6 cifre)", max_chars=6, type="password", key="new_pin")
-        if st.button("Actualizeaza PIN", key="update_pin"):
-            if not new_pin:
-                st.error("Introdu un PIN")
-            elif len(new_pin) != 6 or not new_pin.isdigit():
-                st.error("PIN invalid. Trebuie exact 6 cifre.")
-            else:
-                change_pin(selected, new_pin)
-                st.success(f"PIN actualizat pentru {selected}!")
-                st.rerun()
