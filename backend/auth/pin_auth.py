@@ -14,16 +14,6 @@ LOGIN_ATTEMPTS_KEY = "pin_failed_attempts"
 BLOCK_DURATION_MINUTES = 30
 MAX_ATTEMPTS = 3
 
-#==============Fortează PIN in json===============
-def force_reset_pins():
-    """Resetează PIN-urile la valorile implicite"""
-    default_pins = {
-        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
-        "manager": hashlib.sha256("222222".encode()).hexdigest(),
-        "admin": hashlib.sha256("333333".encode()).hexdigest()
-    }
-    save_pins(default_pins)
-    st.success("PIN-uri resetate! Acum folosește: angajat=111111, manager=222222, admin=333333")
 # ========== INCARCA PIN-URILE ==========
 def load_pins():
     if not PIN_FILE.exists():
@@ -35,28 +25,9 @@ def load_pins():
         with open(PIN_FILE, "w") as f:
             json.dump(default_pins, f, indent=2)
         return default_pins
-    
     with open(PIN_FILE, "r") as f:
-        pins = json.load(f)
-    
-    # Verifică dacă hash-urile sunt corecte. Dacă nu, le corectează.
-    expected = {
-        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
-        "manager": hashlib.sha256("222222".encode()).hexdigest(),
-        "admin": hashlib.sha256("333333".encode()).hexdigest()
-    }
-    
-    needs_save = False
-    for user, correct_hash in expected.items():
-        if user in pins and pins[user] != correct_hash:
-            pins[user] = correct_hash
-            needs_save = True
-    
-    if needs_save:
-        save_pins(pins)
-    
-    return pins
-==========================================
+        return json.load(f)
+
 def save_pins(pins_dict):
     with open(PIN_FILE, "w") as f:
         json.dump(pins_dict, f, indent=2)
