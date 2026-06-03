@@ -13,6 +13,16 @@ PIN_FILE = Path(__file__).parent / "pins.json"
 LOGIN_ATTEMPTS_KEY = "pin_failed_attempts"
 BLOCK_DURATION_MINUTES = 30
 MAX_ATTEMPTS = 3
+#===========================
+def force_update_pins():
+    """Rescrie fișierul pins.json cu valorile din cod"""
+    new_pins = {
+        "angajat": hashlib.sha256("111111".encode()).hexdigest(),
+        "manager": hashlib.sha256("222222".encode()).hexdigest(),
+        "admin": hashlib.sha256("333333".encode()).hexdigest()
+    }
+    save_pins(new_pins)
+    return new_pins
 
 # ========== INCARCA PIN-URILE ==========
 def load_pins():
