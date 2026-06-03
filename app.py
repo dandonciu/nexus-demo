@@ -46,7 +46,7 @@ if not st.session_state.logged_in:
         with st.form("login_form"):
             pwd = st.text_input("Parolă Acces (angajat / manager)", type="password")
             if st.form_submit_button("Autentificare", use_container_width=True):
-                if pwd in ["angajat", "manager"]:
+                if pwd in ["angajat", "manager", "admin"]:
                     # Parolă corectă → trecem la 2FA
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = pwd
