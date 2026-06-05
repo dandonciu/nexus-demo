@@ -139,3 +139,10 @@ elif st.session_state.current_module == 'Etichete':
 else:
     st.button("⬅️ Înapoi", on_click=go_home)
     st.info("Modul în dezvoltare")
+    
+elif st.se1ssion_state.current_module == 'Vault':
+    st.button("⬅️ Înapoi", on_click=go_home)
+    render_Vault_dashboard()
+else:
+    st.button("⬅️ Înapoi", on_click=go_home)
+    st.info("Modul în dezvoltare")
