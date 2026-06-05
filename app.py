@@ -54,7 +54,7 @@ PASSWORDS = {
 }
 
 # În codul de login (unde verifici submitted):
-   if submitted:
+       if submitted:
    if pwd in PASSWORDS:
         role = PASSWORDS[pwd]  # ← asta e rolul real
         st.session_state.awaiting_2fa = True
