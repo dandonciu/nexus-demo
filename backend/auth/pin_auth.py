@@ -58,6 +58,7 @@ def change_pin(username, new_pin):
         return False
     PIN_URI[username] = hashlib.sha256(new_pin.encode()).hexdigest()
     return True
+
 def verify_2fa(username):
     if st.session_state.get("logged_in", False):
         return True
@@ -67,7 +68,7 @@ def verify_2fa(username):
         minutes_left = int((block_until - datetime.now()).total_seconds() / 60) + 1
         st.error(f"Cont blocat temporar. Incercati din nou peste {minutes_left} minute.")
         return False
-  #===============================================  
+    
     # Container centrat pentru 2FA
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
@@ -110,12 +111,11 @@ def verify_2fa(username):
         
         # Butonul Înapoi (în afara formularului)
         colb1, colb2, colb3 = st.columns([1, 3, 1])
-    
-    with col2:
-        if st.button("Inapoi", key="back_to_login_btn", use_container_width=True):
-            st.session_state.awaiting_2fa = False
-            st.session_state.pending_2fa_user = None
-            st.rerun()
+        with colb2:
+            if st.button("◀️ Înapoi", key="back_to_login_btn", use_container_width=True):
+                st.session_state.awaiting_2fa = False
+                st.session_state.pending_2fa_user = None
+                st.rerun()
     
     return False
 
