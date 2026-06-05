@@ -46,16 +46,23 @@ if not st.session_state.logged_in:
             pwd = st.text_input("Parolă Acces (angajat / manager / admin)", type="password")
             submitted = st.form_submit_button("Autentificare", use_container_width=True)
             
-            if submitted:
-                if pwd in ["angajat", "manager", "admin"]:
-                    st.session_state.awaiting_2fa = True
-                    st.session_state.pending_2fa_user = pwd
-                    st.session_state.pending_2fa_role = pwd
-                    st.rerun()
-                else:
-                    st.error("Acces Respins!")
-    
-    st.stop()
+           # Dicționar care face legătura între parolă și rol
+PASSWORDS = {
+    "angajat": "angajat",
+    "manager": "manager", 
+    "admin": "admin"
+}
+
+# În codul de login (unde verifici submitted):
+if submitted:
+    if pwd in PASSWORDS:
+        role = PASSWORDS[pwd]  # ← asta e rolul real
+        st.session_state.awaiting_2fa = True
+        st.session_state.pending_2fa_user = role     # ← trimitem rolul, nu parola
+        st.session_state.pending_2fa_role = role
+        st.rerun()
+    else:
+        st.error("Acces Respins!")
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
 # Aici vine dashboard-ul tău, modulele, etc.
