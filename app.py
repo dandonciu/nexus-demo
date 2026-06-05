@@ -137,5 +137,5 @@ elif st.session_state.current_module == 'Etichete':
     render_etichete_module() 
 elif st.se1ssion_state.current_module == 'vault':
     st.button("⬅️ Înapoi", on_click=go_home)
-    render_Vault_module()
+    render_vault_module()
 
