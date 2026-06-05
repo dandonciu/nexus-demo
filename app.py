@@ -135,10 +135,8 @@ elif st.session_state.current_module == 'Email':
     render_email_parser_module()
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi", on_click=go_home)
-    render_etichete_module()
-
-    
+    render_etichete_module() 
 elif st.se1ssion_state.current_module == 'Vault':
     st.button("⬅️ Înapoi", on_click=go_home)
-    render_Vault_dashboard()
+    render_Vault_module()
 
