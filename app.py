@@ -6,7 +6,7 @@ from backend.incoming_orders.email_parser import render_email_parser_module
 from backend.services.order_orchestrator import render_lansare_module
 from backend.services.etichete import render_etichete_module
 
-st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="", layout="wide")
+st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
 
 if 'db' not in st.session_state: st.session_state.db = init_db()
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
@@ -37,7 +37,7 @@ if not st.session_state.logged_in:
             st.session_state.pending_2fa_user = None
             st.rerun()
         else:
-            st.stop()
+            return  # oprește execuția
     
     # Altfel, afișează formularul de parolă
     col1, col2, col3 = st.columns([1, 1, 1])
@@ -46,17 +46,10 @@ if not st.session_state.logged_in:
             pwd = st.text_input("Parolă Acces (angajat / manager / admin)", type="password")
             submitted = st.form_submit_button("Autentificare", use_container_width=True)
             
-            # Dicționar care face legătura între parolă și rol
-            PASSWORDS = {
-                "angajat": "angajat",
-                "manager": "manager", 
-                "admin": "admin"
-            }
-
             if submitted:
                 # Normalizare: ignoră orice text suplimentar
-                if pwd in PASSWORDS:
-                    role = PASSWORDS[pwd]
+                if pwd in ["angajat", "manager", "admin"]:
+                    role = pwd
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = role
                     st.session_state.pending_2fa_role = role
@@ -71,15 +64,33 @@ if not st.session_state.logged_in:
                         role = "admin"
                     else:
                         st.error("Acces Respins!")
-                        st.stop()
+                        return
                     
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = role
                     st.session_state.pending_2fa_role = role
                     st.rerun()
+    
+    return  # oprește execuția aici dacă nu e logat
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
-# Aici vine dashboard-ul tău, modulele, etc.
+
+# Sidebar doar pentru admin
+if st.session_state.role == "admin":
+    with st.sidebar:
+        st.markdown("### 🔧 Admin Panel")
+        st.markdown("---")
+        if st.button("📊 Dashboard Admin", use_container_width=True):
+            st.session_state.current_module = 'AdminDashboard'
+            st.rerun()
+        if st.button("👥 Utilizatori", use_container_width=True):
+            st.session_state.current_module = 'AdminUsers'
+            st.rerun()
+        if st.button("⚙️ Setări Sistem", use_container_width=True):
+            st.session_state.current_module = 'AdminSettings'
+            st.rerun()
+        st.markdown("---")
+        st.caption(f"Logat ca: **{st.session_state.role.upper()}**")
 
 st.markdown("""
 <style>
@@ -95,7 +106,11 @@ c_logo, c_user, c_out = st.columns([8, 2, 1])
 with c_logo: st.markdown("### 🌌 NEXUS Core Orchestrator")
 with c_user: st.markdown(f"<div style='text-align:right; padding-top:10px; color:grey;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
 with c_out:
-    if st.button("🚪 Logout"): st.session_state.logged_in = False; st.rerun()
+    if st.button("🚪 Logout"): 
+        st.session_state.logged_in = False
+        st.session_state.role = None
+        st.session_state.current_module = 'Home'
+        st.rerun()
 st.divider()
 
 if st.session_state.current_module == 'Home':
@@ -127,27 +142,30 @@ if st.session_state.current_module == 'Home':
         if st.button("Verifică Inbox", use_container_width=True): st.session_state.current_module = 'Email'; st.rerun()
 
     with col6:
-        st.markdown('<div class="tile"><h3> Studio Etichete AI</h3><p>Editare PDF/JPG cu AI</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="tile"><h3>🎨 Studio Etichete AI</h3><p>Editare PDF/JPG cu AI</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Studio", use_container_width=True): st.session_state.current_module = 'Etichete'; st.rerun()
 
     with col7:
         st.markdown('<div class="tile"><h3>📊 Manager Analytics</h3><p>KPIs & Istoric Livrări</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Dashboard", use_container_width=True):
-            if st.session_state.role == "manager": st.session_state.current_module = 'Manager'; st.rerun()
-            else: st.error("⛔ Interzis. Doar Manager.")
+            if st.session_state.role == "manager": 
+                st.session_state.current_module = 'Manager'
+                st.rerun()
+            else: 
+                st.error("⛔ Interzis. Doar Manager.")
 
     with col8:
         st.markdown('<div class="tile"><h3>🛡️ Vault Clienți</h3><p>Setări, Baze Date, Backup</p></div>', unsafe_allow_html=True)
         st.button("În Construcție 🚧", use_container_width=True, disabled=True, key="vault")
 
 elif st.session_state.current_module == 'Lansare':
-    st.button("️ Înapoi la Panoul Principal", on_click=go_home)
+    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     render_lansare_module()
 elif st.session_state.current_module == 'Manager':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     render_manager_dashboard()
 elif st.session_state.current_module == 'Email':
-    st.button("️ Înapoi la Panoul Principal", on_click=go_home)
+    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     render_email_parser_module()
 elif st.session_state.current_module == 'Receptie':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
@@ -166,3 +184,16 @@ elif st.session_state.current_module == 'SmartBill':
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     render_etichete_module()
+# Secțiune pentru admin dashboard (placeholder)
+elif st.session_state.current_module == 'AdminDashboard':
+    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
+    st.title("🔧 Admin Dashboard")
+    st.info("Panou de administrare - în dezvoltare")
+elif st.session_state.current_module == 'AdminUsers':
+    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
+    st.title("👥 Gestionare Utilizatori")
+    st.info("Modul utilizatori - în dezvoltare")
+elif st.session_state.current_module == 'AdminSettings':
+    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
+    st.title("⚙️ Setări Sistem")
+    st.info("Setări sistem - în dezvoltare")
