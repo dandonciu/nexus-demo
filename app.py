@@ -53,7 +53,7 @@ PASSWORDS = {
     "admin": "admin"
 }
 
-if submitted:
+    if submitted:
     # Normalizare: ignoră orice text suplimentar
     if pwd == "angajat" or pwd == "manager" or pwd == "admin":
         role = pwd  # parola corectă = rolul
