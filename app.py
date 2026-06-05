@@ -37,7 +37,7 @@ if not st.session_state.logged_in:
             st.session_state.pending_2fa_user = None
             st.rerun()
         else:
-            return  # oprește execuția
+            st.stop()
     
     # Altfel, afișează formularul de parolă
     col1, col2, col3 = st.columns([1, 1, 1])
@@ -64,14 +64,14 @@ if not st.session_state.logged_in:
                         role = "admin"
                     else:
                         st.error("Acces Respins!")
-                        return
+                        st.stop()
                     
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = role
                     st.session_state.pending_2fa_role = role
                     st.rerun()
     
-    return  # oprește execuția aici dacă nu e logat
+    st.stop()  # ← asta oprește execuția dacă nu e logat
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
 
