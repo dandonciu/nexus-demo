@@ -74,7 +74,7 @@ def verify_2fa(username):
         return False
     
     # Container centrat pentru 2FA
-    col1, col2, col3 = st.columns([2, 1, 2])
+    col1, col2, col3 = st.columns([2, 3, 2])
     with col2:
         st.markdown("---")
         st.markdown("<h3 style='text-align: center;'>🔐 Verificare cod securitate</h3>", unsafe_allow_html=True)
