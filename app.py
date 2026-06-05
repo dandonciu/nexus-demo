@@ -5,6 +5,7 @@ from backend.manager_analytics.kpi_dashboard import render_manager_dashboard
 from backend.incoming_orders.email_parser import render_email_parser_module
 from backend.services.order_orchestrator import render_lansare_module
 from backend.services.etichete import render_etichete_module
+from backend.services.vault import render_vault_module   # ← linia asta
 
 st.set_page_config(page_title="NEXUS B2B Enterprise", page_icon="🌌", layout="wide")
 
