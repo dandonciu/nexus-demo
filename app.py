@@ -136,9 +136,7 @@ elif st.session_state.current_module == 'Email':
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi", on_click=go_home)
     render_etichete_module()
-else:
-    st.button("⬅️ Înapoi", on_click=go_home)
-    st.info("Modul în dezvoltare")
+
     
 elif st.se1ssion_state.current_module == 'Vault':
     st.button("⬅️ Înapoi", on_click=go_home)
