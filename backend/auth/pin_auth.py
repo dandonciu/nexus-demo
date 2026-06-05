@@ -124,22 +124,3 @@ def verify_2fa(username):
     
     return False
 
-def admin_2fa_panel():
-    if st.session_state.get("role") not in ["admin", "manager"]:
-        return
-    with st.sidebar.expander("Admin 2FA", expanded=False):
-        blocked_users = []
-        for key in st.session_state.keys():
-            if key.startswith("blocked_until_"):
-                username = key.replace("blocked_until_", "")
-                if is_blocked(username):
-                    blocked_users.append(username)
-        if blocked_users:
-            st.warning(f"Blocati: {', '.join(blocked_users)}")
-            for user in blocked_users:
-                if st.button(f"Deblocheaza {user}", key=f"unblock_{user}"):
-                    unblock_user(user)
-                    st.success(f"{user} deblocat!")
-                    st.rerun()
-        else:
-            st.success("Niciun utilizator blocat")
