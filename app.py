@@ -124,8 +124,6 @@ if st.session_state.current_module == 'Home':
             if st.session_state.role == "manager": st.session_state.current_module = 'Vault'; st.rerun()
             else: st.error("⛔ Doar Manager")
         
-        st.button("În Construcție 🚧", use_container_width=True, disabled=True, key="vault")
-
 elif st.session_state.current_module == 'Lansare':
     st.button("⬅️ Înapoi", on_click=go_home)
     render_lansare_module()
