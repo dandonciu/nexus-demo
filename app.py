@@ -117,11 +117,10 @@ if st.session_state.current_module == 'Home':
         if st.button("Manager", use_container_width=True):
             if st.session_state.role == "manager": st.session_state.current_module = 'Manager'; st.rerun()
             else: st.error("⛔ Doar Manager")
-    
-    with col8:
+        with col8:
         st.markdown('<div class="tile"><h3>🛡️ Vault Clienți</h3><p>Setări, Baze Date, Backup</p></div>', unsafe_allow_html=True)
         if st.button("Acces", use_container_width=True):
-            if st.session_state.role == "manager": st.session_state.current_module = 'Vault'; st.rerun()
+            if st.session_state.role == "manager": st.session_state.current_module = 'vault'; st.rerun()
             else: st.error("⛔ Doar Manager")
         
 elif st.session_state.current_module == 'Lansare':
@@ -136,7 +135,7 @@ elif st.session_state.current_module == 'Email':
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi", on_click=go_home)
     render_etichete_module() 
-elif st.se1ssion_state.current_module == 'Vault':
+elif st.se1ssion_state.current_module == 'vault':
     st.button("⬅️ Înapoi", on_click=go_home)
     render_Vault_module()
 
