@@ -114,13 +114,13 @@ if st.session_state.current_module == 'Home':
         if st.button("Deschide Studio", use_container_width=True): st.session_state.current_module = 'Etichete'; st.rerun()
     with col7:
         st.markdown('<div class="tile"><h3>📊 Analytics</h3><p>KPIs</p></div>', unsafe_allow_html=True)
-        if st.button("Dashboard", use_container_width=True):
+        if st.button("Manager", use_container_width=True):
             if st.session_state.role == "manager": st.session_state.current_module = 'Manager'; st.rerun()
             else: st.error("⛔ Doar Manager")
     
     with col8:
         st.markdown('<div class="tile"><h3>🛡️ Vault Clienți</h3><p>Setări, Baze Date, Backup</p></div>', unsafe_allow_html=True)
-        if st.button("Dashboard", use_container_width=True):
+        if st.button("Acces", use_container_width=True):
             if st.session_state.role == "manager": st.session_state.current_module = 'Vault'; st.rerun()
             else: st.error("⛔ Doar Manager")
         
@@ -141,6 +141,4 @@ elif st.session_state.current_module == 'Etichete':
 elif st.se1ssion_state.current_module == 'Vault':
     st.button("⬅️ Înapoi", on_click=go_home)
     render_Vault_dashboard()
-else:
-    st.button("⬅️ Înapoi", on_click=go_home)
-    st.info("Modul în dezvoltare")
+
