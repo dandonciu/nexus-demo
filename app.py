@@ -113,7 +113,7 @@ if st.session_state.current_module == 'Home':
         st.markdown('<div class="tile"><h3>🎨 Etichete AI</h3><p>Editare PDF</p></div>', unsafe_allow_html=True)
         if st.button("Deschide Studio", use_container_width=True): st.session_state.current_module = 'Etichete'; st.rerun()
     with col7:
-        st.markdown('<div class="tile"><h3>📊 Analytics</h3><p>KPIs</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="tile"><h3>📊 Manager Analytics</h3><p>KPIs</p></div>', unsafe_allow_html=True)
         if st.button("Manager", use_container_width=True):
             if st.session_state.role == "manager": st.session_state.current_module = 'Manager'; st.rerun()
             else: st.error("⛔ Doar Manager")
