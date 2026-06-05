@@ -99,7 +99,7 @@ if st.session_state.current_module == 'Home':
         if st.button("Deschide Recepție", use_container_width=True): st.session_state.current_module = 'Receptie'; st.rerun()
     with col3:
         st.markdown('<div class="tile"><h3>🚚 TraceHub</h3><p>(Log Nexus)</p></div>', unsafe_allow_html=True)
-        if st.button("Deschide Transport", use_container_width=True): st.session_state.current_module = 'Transport'; st.rerun()
+        if st.button("Deschide Log Nexus", use_container_width=True): st.session_state.current_module = 'Transport'; st.rerun()
     with col4:
         st.markdown('<div class="tile"><h3>🧾 SmartBill HUB</h3><p>Facturare</p></div>', unsafe_allow_html=True)
         if st.button("Deschide SmartBill", use_container_width=True): st.session_state.current_module = 'SmartBill'; st.rerun()
