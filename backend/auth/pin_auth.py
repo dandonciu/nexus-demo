@@ -66,7 +66,11 @@ def verify_2fa(username):
     if is_blocked(username):
         block_until = st.session_state[f"blocked_until_{username}"]
         minutes_left = int((block_until - datetime.now()).total_seconds() / 60) + 1
-        st.error(f"Cont blocat temporar. Incercati din nou peste {minutes_left} minute.")
+        st.error(f"❌ Cont blocat temporar. Incercati din nou peste {minutes_left} minute.")
+        if st.button("◀️ Înapoi la autentificare", key="back_from_blocked"):
+            st.session_state.awaiting_2fa = False
+            st.session_state.pending_2fa_user = None
+            st.rerun()
         return False
     
     # Container centrat pentru 2FA
@@ -74,19 +78,16 @@ def verify_2fa(username):
     with col2:
         st.markdown("---")
         st.markdown("<h3 style='text-align: center;'>🔐 Verificare cod securitate</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #666;'>Introdu codul PIN</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: #666;'>Utilizator: <b>{username}</b></p>", unsafe_allow_html=True)
         
-        # FORMULAR pentru a prinde tasta Enter
+        # Afișează câte încercări au rămas
+        attempts_used = st.session_state.get(f"{LOGIN_ATTEMPTS_KEY}_{username}", 0)
+        remaining = MAX_ATTEMPTS - attempts_used
+        if remaining > 0 and remaining < MAX_ATTEMPTS:
+            st.warning(f"⚠️ Mai ai {remaining} încercări rămase.")
+        
         with st.form(key=f"2fa_form_{username}"):
-            pin_input = st.text_input(
-                "Cod PIN (6 cifre)", 
-                type="password", 
-                max_chars=6, 
-                placeholder="PIN",
-                label_visibility="collapsed"
-            )
-            
-            # Butonul Verifică în interiorul formularului
+            pin_input = st.text_input("Cod PIN (6 cifre)", type="password", max_chars=6, placeholder="PIN", label_visibility="collapsed")
             submitted = st.form_submit_button("✅ Verifică", use_container_width=True)
             
             if submitted:
@@ -97,25 +98,29 @@ def verify_2fa(username):
                     st.warning("PIN invalid. Trebuie să fie exact 6 cifre.")
                     st.rerun()
                 if verify_pin(username, pin_input):
+                    # Reset succes
                     st.session_state[f"{LOGIN_ATTEMPTS_KEY}_{username}"] = 0
-                    st.success("Cod corect!")
+                    st.success("✅ Cod corect!")
                     return True
                 else:
                     was_blocked = register_failed_attempt(username)
-                    remaining = MAX_ATTEMPTS - st.session_state.get(f"{LOGIN_ATTEMPTS_KEY}_{username}", 1)
+                    remaining_after = MAX_ATTEMPTS - st.session_state.get(f"{LOGIN_ATTEMPTS_KEY}_{username}", 0)
                     if was_blocked:
-                        st.error(f"Prea multe încercări eșuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
+                        st.error(f"❌ Prea multe încercări eșuate! Cont blocat {BLOCK_DURATION_MINUTES} minute.")
+                        if st.button("◀️ Înapoi la autentificare", key="back_after_block"):
+                            st.session_state.awaiting_2fa = False
+                            st.session_state.pending_2fa_user = None
+                            st.rerun()
                     else:
-                        st.error(f"Cod incorect! Mai ai {remaining} încercări.")
+                        st.error(f"❌ Cod incorect! Mai ai {remaining_after} încercări.")
                     return False
         
-        # Butonul Înapoi (în afara formularului)
-        colb1, colb2, colb3 = st.columns([1, 3, 1])
-        with colb2:
-            if st.button("◀️ Înapoi", key="back_to_login_btn", use_container_width=True):
-                st.session_state.awaiting_2fa = False
-                st.session_state.pending_2fa_user = None
-                st.rerun()
+        # Buton Înapoi - mereu vizibil
+        st.markdown("---")
+        if st.button("◀️ Înapoi la autentificare", key="back_to_login_main", use_container_width=True):
+            st.session_state.awaiting_2fa = False
+            st.session_state.pending_2fa_user = None
+            st.rerun()
     
     return False
 
