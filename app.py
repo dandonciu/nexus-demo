@@ -47,50 +47,51 @@ if not st.session_state.logged_in:
             submitted = st.form_submit_button("Autentificare", use_container_width=True)
             
             if submitted:
-                # Normalizare: ignoră orice text suplimentar
-                if pwd in ["angajat", "manager", "admin"]:
-                    role = pwd
+                # Verificare parolă
+                if pwd == "angajat":
+                    role = "angajat"
+                    st.session_state.awaiting_2fa = True
+                    st.session_state.pending_2fa_user = role
+                    st.session_state.pending_2fa_role = role
+                    st.rerun()
+                elif pwd == "manager":
+                    role = "manager"
+                    st.session_state.awaiting_2fa = True
+                    st.session_state.pending_2fa_user = role
+                    st.session_state.pending_2fa_role = role
+                    st.rerun()
+                elif pwd == "admin":
+                    role = "admin"
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = role
                     st.session_state.pending_2fa_role = role
                     st.rerun()
                 else:
-                    # Dacă utilizatorul a scris "angajat-no" sau altceva
-                    if "angajat-no" in pwd:
+                    # Verifică dacă conține cuvântul cheie (ex: "angajat-no")
+                    if "angajat" in pwd:
                         role = "angajat"
+                        st.session_state.awaiting_2fa = True
+                        st.session_state.pending_2fa_user = role
+                        st.session_state.pending_2fa_role = role
+                        st.rerun()
                     elif "manager" in pwd:
                         role = "manager"
+                        st.session_state.awaiting_2fa = True
+                        st.session_state.pending_2fa_user = role
+                        st.session_state.pending_2fa_role = role
+                        st.rerun()
                     elif "admin" in pwd:
                         role = "admin"
+                        st.session_state.awaiting_2fa = True
+                        st.session_state.pending_2fa_user = role
+                        st.session_state.pending_2fa_role = role
+                        st.rerun()
                     else:
-                        st.error("Acces Respins!")
-                        st.stop()
-                    
-                    st.session_state.awaiting_2fa = True
-                    st.session_state.pending_2fa_user = role
-                    st.session_state.pending_2fa_role = role
-                    st.rerun()
+                        st.error("❌ Parolă incorectă! Încearcă: angajat, manager sau admin")
     
-    st.stop()  # ← asta oprește execuția dacă nu e logat
+    st.stop()
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
-
-# Sidebar doar pentru admin
-if st.session_state.role == "admin":
-    with st.sidebar:
-        st.markdown("### 🔧 Admin Panel")
-        st.markdown("---")
-        if st.button("📊 Dashboard Admin", use_container_width=True):
-            st.session_state.current_module = 'AdminDashboard'
-            st.rerun()
-        if st.button("👥 Utilizatori", use_container_width=True):
-            st.session_state.current_module = 'AdminUsers'
-            st.rerun()
-        if st.button("⚙️ Setări Sistem", use_container_width=True):
-            st.session_state.current_module = 'AdminSettings'
-            st.rerun()
-        st.markdown("---")
-        st.caption(f"Logat ca: **{st.session_state.role.upper()}**")
 
 st.markdown("""
 <style>
@@ -110,6 +111,8 @@ with c_out:
         st.session_state.logged_in = False
         st.session_state.role = None
         st.session_state.current_module = 'Home'
+        st.session_state.awaiting_2fa = False
+        st.session_state.pending_2fa_user = None
         st.rerun()
 st.divider()
 
@@ -184,16 +187,3 @@ elif st.session_state.current_module == 'SmartBill':
 elif st.session_state.current_module == 'Etichete':
     st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
     render_etichete_module()
-# Secțiune pentru admin dashboard (placeholder)
-elif st.session_state.current_module == 'AdminDashboard':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("🔧 Admin Dashboard")
-    st.info("Panou de administrare - în dezvoltare")
-elif st.session_state.current_module == 'AdminUsers':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("👥 Gestionare Utilizatori")
-    st.info("Modul utilizatori - în dezvoltare")
-elif st.session_state.current_module == 'AdminSettings':
-    st.button("⬅️ Înapoi la Panoul Principal", on_click=go_home)
-    st.title("⚙️ Setări Sistem")
-    st.info("Setări sistem - în dezvoltare")
