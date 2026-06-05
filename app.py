@@ -48,7 +48,7 @@ if not st.session_state.logged_in:
             
             if submitted:
                 # Normalizare: ignoră orice text suplimentar
-                if pwd in ["angajat", "manager", "admin"]:
+                if pwd in ["angajat-no", "manager", "admin"]:
                     role = pwd
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = role
