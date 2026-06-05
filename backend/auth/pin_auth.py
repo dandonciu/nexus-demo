@@ -110,13 +110,6 @@ def verify_2fa(username):
         
         # Butonul Înapoi (în afara formularului)
         colb1, colb2, colb3 = st.columns([1, 3, 1])
-        with colb2:
-            if st.button("◀️ Înapoi", key="back_to_login_btn", use_container_width=True):
-                st.session_state.awaiting_2fa = False
-                st.session_state.pending_2fa_user = None
-                st.rerun()
-    
-    return False
     
     with col2:
         if st.button("Inapoi", key="back_to_login_btn", use_container_width=True):
