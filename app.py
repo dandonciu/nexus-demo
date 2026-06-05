@@ -53,6 +53,13 @@ PASSWORDS = {
     "admin": "admin"
 }
 
+# Dicționar care face legătura între parolă și rol
+PASSWORDS = {
+    "angajat": "angajat",
+    "manager": "manager", 
+    "admin": "admin"
+}
+
 # În codul de login (unde verifici submitted):
 if submitted:
     if pwd in PASSWORDS:
