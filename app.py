@@ -48,7 +48,7 @@ if not st.session_state.logged_in:
             
             if submitted:
                 # Normalizare: ignoră orice text suplimentar
-                if pwd in ["angajat-no", "manager", "admin"]:
+                if pwd in ["angajat", "manager", "admin"]:
                     role = pwd
                     st.session_state.awaiting_2fa = True
                     st.session_state.pending_2fa_user = role
@@ -56,7 +56,7 @@ if not st.session_state.logged_in:
                     st.rerun()
                 else:
                     # Dacă utilizatorul a scris "angajat-no" sau altceva
-                    if "angajat" in pwd:
+                    if "angajat-no" in pwd:
                         role = "angajat"
                     elif "manager" in pwd:
                         role = "manager"
