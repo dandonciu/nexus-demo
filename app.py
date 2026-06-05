@@ -53,23 +53,32 @@ PASSWORDS = {
     "admin": "admin"
 }
 
-# Dicționar care face legătura între parolă și rol
-PASSWORDS = {
-    "angajat": "angajat",
-    "manager": "manager", 
-    "admin": "admin"
-}
-
-# În codul de login (unde verifici submitted):
 if submitted:
-    if pwd in PASSWORDS:
-        role = PASSWORDS[pwd]  # ← asta e rolul real
+    # Normalizare: ignoră orice text suplimentar
+    if pwd == "angajat" or pwd == "manager" or pwd == "admin":
+        role = pwd  # parola corectă = rolul
         st.session_state.awaiting_2fa = True
-        st.session_state.pending_2fa_user = role     # ← trimitem rolul, nu parola
+        st.session_state.pending_2fa_user = role
         st.session_state.pending_2fa_role = role
         st.rerun()
     else:
-        st.error("Acces Respins!")
+        # Dacă utilizatorul a scris "angajat-no" sau altceva
+        if "angajat" in pwd:
+            role = "angajat"
+        elif "manager" in pwd:
+            role = "manager"
+        elif "admin" in pwd:
+            role = "admin"
+        else:
+            st.error("Acces Respins!")
+            st.stop()
+        
+        st.session_state.awaiting_2fa = True
+        st.session_state.pending_2fa_user = role
+        st.session_state.pending_2fa_role = role
+        st.rerun()
+
+st.stop()
 
 # ========== RESTUL APLICAȚIEI (doar dacă e logat) ==========
 # Aici vine dashboard-ul tău, modulele, etc.
