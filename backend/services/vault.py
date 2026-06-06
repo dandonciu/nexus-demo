@@ -11,7 +11,7 @@ def render_vault_module():
     st.success("""
     **Legislație:**
     
-    - Conform legislației contabile actuale, termenul de păstrare pentru anumite documente justificative și registre este de 5 ani, calculat de la data de 1 iulie a anului următor încheierii exercițiului financiar.
+    - Conform legislației contabile actuale, termenul de păstrare pentru anumite documente justificative și registre este de 5 ani
 
 - Situații financiare anuale: Se păstrează timp de 10 ani.Statele de plată și dosarele de personal: Se păstrează timp de 50 de ani
 
