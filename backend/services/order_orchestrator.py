@@ -272,7 +272,7 @@ def render_lansare_module():
                 payload_fisc.append({"Cod_Depozit": item['Cod_Depozit_Pal'], "Nomenclator Oficial": nf, "Cantitate (U.M.)": f"{((pal * P) + C) * item['Conversie_Baza']} {item['UM_Baza']}"})
 
             cp1, cp2 = st.columns(2)
-            with cp1: st.warning(" Spre Stivuitorist"); st.dataframe(pd.DataFrame(payload_log)[['Cod Gestiune', 'Denumire', 'Cant', 'UM']], hide_index=True)
+            with cp1: st.warning(" Spre Gestionar Depozit"); st.dataframe(pd.DataFrame(payload_log)[['Cod Gestiune', 'Denumire', 'Cant', 'UM']], hide_index=True)
             with cp2: st.success("🧾 Spre SmartBill"); st.dataframe(pd.DataFrame(payload_fisc)[['Cod_Depozit', 'Nomenclator Oficial', 'Cantitate (U.M.)']], hide_index=True)
             
             st.divider()
@@ -325,7 +325,7 @@ def render_lansare_module():
             if cmd['Status'] == "Asteapta Incarcare":
                 col_a, col_b = st.columns(2)
                 with col_a: 
-                    if st.button("✅ Stivuitorist: Confirmă Încărcare", key=f"inc_{real_idx}", type="primary"): 
+                    if st.button("✅ Gestionar: Confirmă Încărcare", key=f"inc_{real_idx}", type="primary"): 
                         st.session_state.istoric_comenzi_live[real_idx]['Status'] = "Incarcat"
                         st.rerun()
                 with col_b:
