@@ -6,7 +6,7 @@ def render_vault_module():
     st.info("🔐 Modul Vault - dB Back-up - zilnic / dB Back-up - săptămînal / dB Back-up Out of Office - săptămînal.")
     
 
-  st.divider()
+
     
     st.success("""
     **Exemplu de prompt:**
