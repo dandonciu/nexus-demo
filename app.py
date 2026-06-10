@@ -75,6 +75,12 @@ if not st.session_state.logged_in:
 # ==========================================
 # CSS GLOBAL PENTRU ELIMINAREA SPAȚIILOR GOALE (Fără a tăia vizualul)
 # ==========================================
+    c_logo, c_user, c_out = st.columns([8, 2, 1])
+with c_logo: st.markdown("### 🌌 NEXUS  Orchestrator")
+with c_user: st.markdown(f"<div style='text-align:right; padding-top:10px; color:grey;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
+with c_out:
+    if st.button("🚪 Logout"): st.session_state.logged_in = False; st.rerun()
+st.divider()
     st.markdown("""
         <div style="padding: 5px 15px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; display: inline-block; margin-top: 5px;">
             <h1 style="margin: 0; font-weight: 800; font-size: 1.5rem;">🌌 NEXUS ORCHESTRATOR</h1>
