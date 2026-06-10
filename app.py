@@ -104,7 +104,14 @@ with c_logo:
             <p style="margin: 0; color: gray; font-size: 0.85rem;">Sistem Unic de Gestiune, Reconciliere și Automatizare</p>
         </div>
     """, unsafe_allow_html=True)
-
+with c_logo: 
+    # Banner discret, fără background, cu chenar fin
+    st.markdown("""
+        <div style="padding: 5px 15px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; display: inline-block; margin-top: 5px;">
+            <h1 style="margin: 0; font-weight: 800; font-size: 1.5rem;">🌌 NEXUS ORCHESTRATOR</h1>
+            <p style="margin: 0; color: gray; font-size: 0.85rem;">Sistem Unic de Gestiune, Reconciliere și Automatizare</p>
+        </div>
+    """, unsafe_allow_html=True)
 with c_user: 
     # Aliniere perfectă cu butonul
     st.markdown(f"<div style='text-align:right; margin-top: 20px; color:grey; font-size:0.9rem;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
