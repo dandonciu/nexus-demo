@@ -63,7 +63,7 @@ def generate_pdf_document(order_no, client_name, payload_fiscal, payload_log):
     pdf.multi_cell(85, 4, clean_text(f"Adresa: {c_data['Adresa']}"))
     pdf.ln(5)
 
-    pdf.set_font("Arial", 'B', 8)
+    pdf.set_font("Arial", 'B', 12)
     pdf.cell(10, 8, "Nr.", 1, 0, 'C')
     pdf.cell(130, 8, "Denumirea produselor", 1, 0, 'C')
     pdf.cell(20, 8, "U.M.", 1, 0, 'C')
