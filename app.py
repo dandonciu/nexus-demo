@@ -80,7 +80,7 @@ st.markdown("""
     .tile { background-color: #1E1E2E; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #3b3b54; transition: transform 0.2s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 15px; color: white; height: 130px; display: flex; flex-direction: column; justify-content: center;}
     .tile:hover { transform: translateY(-5px); border-color: #00ADB5; }
     .tile h3 { color: #00ADB5; margin-bottom: 5px; font-size: 1.2rem; }
-    .tile p { font-size: 18px; color: #A6ACCD; margin: 0; }
+    .tile p { font-size: 13px; color: #A6ACCD; margin: 0; }
     div[data-testid="stButton"] button { border-radius: 8px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
