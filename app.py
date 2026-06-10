@@ -70,7 +70,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ========== DASHBOARD ==========
-ue)
+
 
 # ==========================================
 # CSS GLOBAL PENTRU ELIMINAREA SPAȚIILOR GOALE (Fără a tăia vizualul)
