@@ -90,7 +90,7 @@ c_logo, c_user, c_out = st.columns([8, 2, 1])
 with c_logo: 
     st.markdown("""
         <div style="padding: 5px 15px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; display: inline-block;">
-            <h3 style="margin: 0; padding: 0; font-size: 2.0rem;">🌌 NEXUS Orchestrator</h3>
+            <h3 style="margin: 0; padding: 0; font-size: 1.8rem;">🌌 NEXUS Orchestrator</h3>
             <p style="margin: 0; color: gray; font-size: 0.85rem; font-weight: normal;">Sistem Unic de Gestiune, Reconciliere și Automatizare</p>
         </div>
     """, unsafe_allow_html=True)
