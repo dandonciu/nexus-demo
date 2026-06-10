@@ -75,7 +75,7 @@ if not st.session_state.logged_in:
 # ==========================================
 # CSS GLOBAL PENTRU ELIMINAREA SPAȚIILOR GOALE (Fără a tăia vizualul)
 # ==========================================
-c_logo, c_user, c_out = st.columns([8, 2, 1])
+c_logo, c_empty, c_user, c_out = st.columns([5, 3, 2, 1])
 
 with c_user: st.markdown(f"<div style='text-align:right; padding-top:10px; color:grey;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
 with c_out:
