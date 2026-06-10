@@ -114,6 +114,7 @@ with c_out:
     st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
     if st.button("🚪 Logout", use_container_width=True): 
         st.session_state.logged_in = False; st.rerun()
+
 if st.session_state.current_module == 'Home':
     st.markdown("#### ⚡ Flux Operațional")
     col1, col2, col3, col4 = st.columns(4)
