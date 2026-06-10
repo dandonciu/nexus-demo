@@ -75,35 +75,34 @@ if not st.session_state.logged_in:
 # ==========================================
 # CSS GLOBAL PENTRU ELIMINAREA SPAȚIILOR GOALE (Fără a tăia vizualul)
 # ==========================================
-c_logo, c_empty, c_user, c_out = st.columns([5, 3, 2, 1])
+st.markdown("""
+    <style>
+    .tile { background-color: #1E1E2E; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #3b3b54; transition: transform 0.2s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 15px; color: white; height: 130px; display: flex; flex-direction: column; justify-content: center;}
+    .tile:hover { transform: translateY(-5px); border-color: #00ADB5; }
+    .tile h3 { color: #00ADB5; margin-bottom: 5px; font-size: 1.2rem; }
+    .tile p { font-size: 13px; color: #A6ACCD; margin: 0; }
+    div[data-testid="stButton"] button { border-radius: 8px; font-weight: bold; }
+    </style>
+""", unsafe_allow_html=True)
 
-with c_user: st.markdown(f"<div style='text-align:right; padding-top:10px; color:grey;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
-with c_out:
-    if st.button("🚪 Logout"): st.session_state.logged_in = False; st.rerun()
-st.divider()
-with c_logo:
+c_logo, c_user, c_out = st.columns([8, 2, 1])
+
+with c_logo: 
     st.markdown("""
-        <div style="padding: 5px 15px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; display: inline-block; margin-top: 5px;">
-            <h1 style="margin: 0; font-weight: 800; font-size: 1.5rem;">🌌 NEXUS ORCHESTRATOR</h1>
-            <p style="margin: 0; color: gray; font-size: 0.85rem;">Sistem Unic de Gestiune, Reconciliere și Automatizare</p>
+        <div style="padding: 5px 15px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; display: inline-block;">
+            <h3 style="margin: 0; padding: 0;">🌌 NEXUS Orchestrator</h3>
+            <p style="margin: 0; color: gray; font-size: 0.85rem; font-weight: normal;">Sistem Unic de Gestiune, Reconciliere și Automatizare</p>
         </div>
     """, unsafe_allow_html=True)
 
-
 with c_user: 
-    # Aliniere perfectă cu butonul
-    st.markdown(f"<div style='text-align:right; margin-top: 20px; color:grey; font-size:0.9rem;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:right; padding-top:15px; color:grey;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
 
 with c_out:
-    # Împingem butonul puțin mai jos ca să fie în linie cu textul
-    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-    if st.button("🚪 Logout", use_container_width=True): 
-        st.session_state.logged_in = False; st.rerun()
-with c_out:
-    # Împingem butonul puțin mai jos ca să fie în linie cu textul
-    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-    if st.button("🚪 Logout", use_container_width=True): 
-        st.session_state.logged_in = False; st.rerun()
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+    if st.button("🚪 Logout"): st.session_state.logged_in = False; st.rerun()
+
+st.divider()
 
 if st.session_state.current_module == 'Home':
     st.markdown("#### ⚡ Flux Operațional")
