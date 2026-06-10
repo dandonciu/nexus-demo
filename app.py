@@ -79,16 +79,41 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-c_logo, c_user, c_out = st.columns([8, 2, 1])
-with c_logo: st.markdown("### 🌌 NEXUS Core Orchestrator")
-with c_user: st.markdown(f"<div style='text-align:right; color:grey;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
-with c_out:
-    if st.button("🚪 Logout"): 
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
-st.divider()
+# ==========================================
+# CSS GLOBAL PENTRU ELIMINAREA SPAȚIILOR GOALE (Fără a tăia vizualul)
+# ==========================================
+st.markdown("""
+    <style>
+    .block-container {
+        padding-top: 1rem !important; 
+        padding-bottom: 1rem !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
+# ==========================================
+# HEADER MENIU RAPID (PE UN SINGUR RÂND COMPACT)
+# ==========================================
+c_logo, c_empty, c_user, c_out = st.columns([5, 3, 2, 1])
+
+with c_logo: 
+    # Banner discret, fără background, cu chenar fin
+    st.markdown("""
+        <div style="padding: 5px 15px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; display: inline-block; margin-top: 5px;">
+            <h1 style="margin: 0; font-weight: 800; font-size: 1.5rem;">🌌 NEXUS ORCHESTRATOR</h1>
+            <p style="margin: 0; color: gray; font-size: 0.85rem;">Sistem Unic de Gestiune, Reconciliere și Automatizare</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+with c_user: 
+    # Aliniere perfectă cu butonul
+    st.markdown(f"<div style='text-align:right; margin-top: 20px; color:grey; font-size:0.9rem;'>Logat ca: <b>{st.session_state.role.upper()}</b></div>", unsafe_allow_html=True)
+
+with c_out:
+    # Împingem butonul puțin mai jos ca să fie în linie cu textul
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    if st.button("🚪 Logout", use_container_width=True): 
+        st.session_state.logged_in = False; st.rerun()
 if st.session_state.current_module == 'Home':
     st.markdown("#### ⚡ Flux Operațional")
     col1, col2, col3, col4 = st.columns(4)
