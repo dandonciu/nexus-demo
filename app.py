@@ -75,28 +75,13 @@ if not st.session_state.logged_in:
 # ==========================================
 # CSS GLOBAL PENTRU ELIMINAREA SPAȚIILOR GOALE (Fără a tăia vizualul)
 # ==========================================
-st.markdown("""
-    <style>
-    .block-container {
-        padding-top: 1rem !important; 
-        padding-bottom: 1rem !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# ==========================================
-# HEADER MENIU RAPID (PE UN SINGUR RÂND COMPACT)
-# ==========================================
-c_logo, c_empty, c_user, c_out = st.columns([5, 3, 2, 1])
-
-with c_logo: 
-    # Banner discret, fără background, cu chenar fin
     st.markdown("""
         <div style="padding: 5px 15px; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; display: inline-block; margin-top: 5px;">
             <h1 style="margin: 0; font-weight: 800; font-size: 1.5rem;">🌌 NEXUS ORCHESTRATOR</h1>
             <p style="margin: 0; color: gray; font-size: 0.85rem;">Sistem Unic de Gestiune, Reconciliere și Automatizare</p>
         </div>
     """, unsafe_allow_html=True)
+
 
 with c_user: 
     # Aliniere perfectă cu butonul
