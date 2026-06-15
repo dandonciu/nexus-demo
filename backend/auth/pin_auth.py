@@ -15,9 +15,9 @@ MAX_ATTEMPTS = 3
 # ========== PIN-URI DIRECT IN COD ==========
 # Modifica aici PIN-urile pentru fiecare utilizator
 PIN_URI = {
-    "angajat": hashlib.sha256("111111".encode()).hexdigest(),
-    "manager": hashlib.sha256("123456".encode()).hexdigest(),
-    "admin": hashlib.sha256("333333".encode()).hexdigest()
+    "angajat": hashlib.sha256("111110".encode()).hexdigest(),
+    "manager": hashlib.sha256("222220".encode()).hexdigest(),
+    "admin": hashlib.sha256("333330".encode()).hexdigest()
 }
 
 def is_blocked(username):
