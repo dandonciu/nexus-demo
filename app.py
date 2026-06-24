@@ -8,7 +8,7 @@ st.set_page_config(layout="wide", page_title="NexusDS", page_icon="🌌")
 
 # Import module operaționale originale
 from backend.services.order_orchestrator import render_lansare_module
-from backend.services.workflow import render_workflow_module, get_active_tasks_count
+
 
 # =========================================================================
 # 🌌 CONECTORI DE IMPORT SECURIZAȚI PENTRU MODULELE TALE PREEXISTENTE
